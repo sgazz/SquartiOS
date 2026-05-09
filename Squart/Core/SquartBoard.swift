@@ -4,7 +4,12 @@ nonisolated struct SquartBoard: Equatable, Sendable {
 
     private var cells: [CellState]
 
-    init(rows: Int, columns: Int, inactiveCells: Set<BoardPosition> = []) {
+    init(
+        rows: Int,
+        columns: Int,
+        inactiveCells: Set<BoardPosition> = [],
+        outsideCells: Set<BoardPosition> = []
+    ) {
         precondition(rows > 0, "Board rows must be greater than zero.")
         precondition(columns > 0, "Board columns must be greater than zero.")
 
@@ -12,7 +17,16 @@ nonisolated struct SquartBoard: Equatable, Sendable {
         self.columns = columns
         self.cells = (0..<(rows * columns)).map { index in
             let position = BoardPosition(row: index / columns, column: index % columns)
-            return inactiveCells.contains(position) ? .inactive : .empty
+
+            if outsideCells.contains(position) {
+                return .outside
+            }
+
+            if inactiveCells.contains(position) {
+                return .inactive
+            }
+
+            return .empty
         }
     }
 

@@ -64,4 +64,24 @@ final class SquartTests: XCTestCase {
         XCTAssertTrue(game.isFinished)
         XCTAssertEqual(game.winner, .horizontal)
     }
+
+    func testDiamondUsesOutsideCellsAndInternalBlockers() throws {
+        let board = try XCTUnwrap(
+            BoardGenerator.board(for: .diamond(size: 5), inactiveCellRatio: 0.25)
+        )
+
+        XCTAssertEqual(board.cellState(at: BoardPosition(row: 0, column: 0)), .outside)
+        XCTAssertEqual(board.cellState(at: BoardPosition(row: 2, column: 2)), .empty)
+        XCTAssertFalse(board.isActiveEmptyCell(at: BoardPosition(row: 0, column: 0)))
+        XCTAssertGreaterThan(
+            (0..<board.rows).flatMap { row in
+                (0..<board.columns).map { column in
+                    board.cellState(at: BoardPosition(row: row, column: column))
+                }
+            }
+            .filter { $0 == .inactive }
+            .count,
+            0
+        )
+    }
 }

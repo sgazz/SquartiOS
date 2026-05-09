@@ -1,0 +1,129 @@
+import SwiftUI
+
+struct SquartLogoView: View {
+    private let cappuccino = Color(red: 0.78, green: 0.66, blue: 0.52)
+    private let bronze = Color(red: 0.58, green: 0.43, blue: 0.30)
+    private let graphite = Color(red: 0.12, green: 0.11, blue: 0.10)
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.09),
+                            Color.white.opacity(0.025)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 26, style: .continuous)
+                        .stroke(cappuccino.opacity(0.20), lineWidth: 1)
+                )
+                .shadow(color: cappuccino.opacity(0.12), radius: 28, y: 14)
+
+            boardMark
+                .padding(18)
+        }
+        .accessibilityHidden(true)
+    }
+
+    private var boardMark: some View {
+        GeometryReader { proxy in
+            let tile = proxy.size.width / 3.4
+            let gap = tile * 0.18
+            let step = tile + gap
+            let originX = (proxy.size.width - (tile * 3 + gap * 2)) / 2
+            let originY = (proxy.size.height - (tile * 3 + gap * 2)) / 2
+
+            ZStack {
+                LogoTile(x: originX, y: originY, size: tile, fill: cappuccino.opacity(0.78), lift: 0)
+                LogoTile(x: originX + step, y: originY, size: tile, fill: graphite.opacity(0.86), lift: 3)
+                LogoTile(x: originX + step * 2, y: originY, size: tile, fill: bronze.opacity(0.76), lift: 1)
+
+                LogoTile(x: originX, y: originY + step, size: tile, fill: graphite.opacity(0.92), lift: 3)
+                DominoBar(
+                    x: originX + step,
+                    y: originY + step,
+                    width: tile * 2 + gap,
+                    height: tile,
+                    fill: cappuccino,
+                    lift: 6
+                )
+
+                LogoTile(x: originX, y: originY + step * 2, size: tile, fill: bronze.opacity(0.64), lift: 1)
+                DominoBar(
+                    x: originX + step,
+                    y: originY + step * 2,
+                    width: tile,
+                    height: tile,
+                    fill: graphite.opacity(0.88),
+                    lift: 3
+                )
+                LogoTile(x: originX + step * 2, y: originY + step * 2, size: tile, fill: cappuccino.opacity(0.62), lift: 0)
+            }
+        }
+    }
+}
+
+private struct LogoTile: View {
+    let x: CGFloat
+    let y: CGFloat
+    let size: CGFloat
+    let fill: Color
+    let lift: CGFloat
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 7, style: .continuous)
+            .fill(fill)
+            .frame(width: size, height: size)
+            .overlay(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.22), radius: 8, y: 4 + lift)
+            .position(x: x + size / 2, y: y + size / 2 - lift)
+    }
+}
+
+private struct DominoBar: View {
+    let x: CGFloat
+    let y: CGFloat
+    let width: CGFloat
+    let height: CGFloat
+    let fill: Color
+    let lift: CGFloat
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 8, style: .continuous)
+            .fill(
+                LinearGradient(
+                    colors: [
+                        fill.opacity(0.98),
+                        fill.opacity(0.78)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .frame(width: width, height: height)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(Color.white.opacity(0.16), lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.30), radius: 10, y: 5 + lift)
+            .position(x: x + width / 2, y: y + height / 2 - lift)
+    }
+}
+
+#Preview {
+    ZStack {
+        Color(red: 0.06, green: 0.055, blue: 0.05)
+            .ignoresSafeArea()
+
+        SquartLogoView()
+            .frame(width: 140, height: 140)
+    }
+}

@@ -2,7 +2,7 @@ nonisolated enum BoardShape: Equatable, Sendable {
     case square(size: Int)
     case rectangle(rows: Int, columns: Int)
     case triangle(size: Int)
-    case diamond(radius: Int)
+    case diamond(size: Int)
     case circle(diameter: Int)
     case hexagon(radius: Int)
     case star(points: Int, radius: Int)
@@ -17,8 +17,7 @@ nonisolated enum BoardShape: Equatable, Sendable {
             return (rows, columns)
         case .triangle(let size):
             return (size, size)
-        case .diamond(let radius):
-            let size = radius * 2 + 1
+        case .diamond(let size):
             return (size, size)
         case .circle(let diameter):
             return (diameter, diameter)
