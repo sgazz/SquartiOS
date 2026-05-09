@@ -7,9 +7,12 @@ enum BoardNodeFactory {
     private static let gap: CGFloat = 0.08
     private static let tileNamePrefix = "tile"
 
+    // MARK: - Board
+
     static func makeBoardNode(
         from board: SquartBoard,
-        previewPositions: Set<BoardPosition>
+        previewPositions: Set<BoardPosition>,
+        aiPreviewPositions: Set<BoardPosition>
     ) -> SCNNode {
         let rootNode = SCNNode()
         let spacing = tileSize + gap
@@ -23,7 +26,8 @@ enum BoardNodeFactory {
                 let tileNode = makeTileNode(
                     for: state,
                     at: position,
-                    isPreviewed: previewPositions.contains(position)
+                    isPreviewed: previewPositions.contains(position),
+                    isAIPreviewed: aiPreviewPositions.contains(position)
                 )
 
                 tileNode.position = SCNVector3(
@@ -53,6 +57,8 @@ enum BoardNodeFactory {
         return nil
     }
 
+    // MARK: - Tile Nodes
+
     static func tileNode(in rootNode: SCNNode, at position: BoardPosition) -> SCNNode? {
         let expectedName = name(for: position)
         var matchingNode: SCNNode?
@@ -70,7 +76,8 @@ enum BoardNodeFactory {
     private static func makeTileNode(
         for state: CellState,
         at position: BoardPosition,
-        isPreviewed: Bool
+        isPreviewed: Bool,
+        isAIPreviewed: Bool
     ) -> SCNNode {
         if state == .outside {
             let node = SCNNode()
@@ -78,15 +85,7 @@ enum BoardNodeFactory {
             return node
         }
 
-        let geometry = SCNBox(
-            width: tileSize,
-            height: height(for: state),
-            length: tileSize,
-            chamferRadius: chamferRadius(for: state)
-        )
-        geometry.materials = [baseMaterial(for: state)]
-
-        let node = SCNNode(geometry: geometry)
+        let node = SCNNode(geometry: tileGeometry(for: state))
         node.name = name(for: position)
         node.castsShadow = true
 
@@ -99,39 +98,33 @@ enum BoardNodeFactory {
         }
 
         if isPreviewed {
-            node.addChildNode(makePreviewNode())
+            node.addChildNode(makePreviewNode(style: .human))
+        }
+
+        if isAIPreviewed {
+            node.addChildNode(makePreviewNode(style: .ai))
         }
 
         return node
     }
 
-    private static func makePreviewNode() -> SCNNode {
-        let rootNode = SCNNode()
-        let fill = SCNBox(width: 0.72, height: 0.018, length: 0.72, chamferRadius: 0.04)
-        fill.materials = [ScenePalette.previewFill]
+    // MARK: - Preview
 
-        let fillNode = SCNNode(geometry: fill)
+    private static func makePreviewNode(style: PreviewStyle) -> SCNNode {
+        let rootNode = SCNNode()
+
+        let fillNode = SCNNode(geometry: style.fillGeometry)
         fillNode.position = SCNVector3(0, 0.018, 0)
         rootNode.addChildNode(fillNode)
 
-        let railLength: CGFloat = 0.76
-        let railThickness: CGFloat = 0.035
-        let railHeight: CGFloat = 0.026
-
         for z in [-0.39, 0.39] as [CGFloat] {
-            let rail = SCNBox(width: railLength, height: railHeight, length: railThickness, chamferRadius: 0.012)
-            rail.materials = [ScenePalette.previewEdge]
-
-            let railNode = SCNNode(geometry: rail)
+            let railNode = SCNNode(geometry: style.horizontalRailGeometry)
             railNode.position = SCNVector3(0, 0.035, z)
             rootNode.addChildNode(railNode)
         }
 
         for x in [-0.39, 0.39] as [CGFloat] {
-            let rail = SCNBox(width: railThickness, height: railHeight, length: railLength, chamferRadius: 0.012)
-            rail.materials = [ScenePalette.previewEdge]
-
-            let railNode = SCNNode(geometry: rail)
+            let railNode = SCNNode(geometry: style.verticalRailGeometry)
             railNode.position = SCNVector3(x, 0.035, 0)
             rootNode.addChildNode(railNode)
         }
@@ -140,16 +133,10 @@ enum BoardNodeFactory {
         return rootNode
     }
 
-    private static func makeDominoNode(for player: Player) -> SCNNode {
-        let domino = SCNBox(
-            width: player == .horizontal ? 0.76 : 0.32,
-            height: 0.18,
-            length: player == .horizontal ? 0.32 : 0.76,
-            chamferRadius: 0.07
-        )
-        domino.materials = [player == .horizontal ? ScenePalette.horizontalDomino : ScenePalette.verticalDomino]
+    // MARK: - Pieces
 
-        let node = SCNNode(geometry: domino)
+    private static func makeDominoNode(for player: Player) -> SCNNode {
+        let node = SCNNode(geometry: player == .horizontal ? BoardGeometry.horizontalDomino : BoardGeometry.verticalDomino)
         node.name = dominoNodeName
         node.position = SCNVector3(0, 0.15, 0)
         node.castsShadow = true
@@ -158,27 +145,18 @@ enum BoardNodeFactory {
     }
 
     private static func makeDominoTopLine(for player: Player) -> SCNNode {
-        let line = SCNBox(
-            width: player == .horizontal ? 0.46 : 0.045,
-            height: 0.012,
-            length: player == .horizontal ? 0.045 : 0.46,
-            chamferRadius: 0.008
-        )
-        line.materials = [player == .horizontal ? ScenePalette.horizontalAccent : ScenePalette.verticalAccent]
-
-        let node = SCNNode(geometry: line)
+        let node = SCNNode(geometry: player == .horizontal ? BoardGeometry.horizontalDominoTopLine : BoardGeometry.verticalDominoTopLine)
         node.position = SCNVector3(0, 0.098, 0)
         return node
     }
 
     private static func makeBlockerCap() -> SCNNode {
-        let cap = SCNBox(width: 0.58, height: 0.035, length: 0.58, chamferRadius: 0.035)
-        cap.materials = [ScenePalette.blockerCap]
-
-        let node = SCNNode(geometry: cap)
+        let node = SCNNode(geometry: BoardGeometry.blockerCap)
         node.position = SCNVector3(0, 0.035, 0)
         return node
     }
+
+    // MARK: - Base
 
     private static func makeBaseNode(rows: Int, columns: Int) -> SCNNode {
         let rootNode = SCNNode()
@@ -186,7 +164,7 @@ enum BoardNodeFactory {
         let length = CGFloat(rows) * tileSize + CGFloat(rows + 1) * gap
 
         let base = SCNBox(width: width + 0.34, height: 0.12, length: length + 0.34, chamferRadius: 0.14)
-        base.materials = [ScenePalette.boardBase]
+        base.materials = [SquartSceneMaterials.trayBase]
 
         let baseNode = SCNNode(geometry: base)
         baseNode.position = SCNVector3(0, -0.17, 0)
@@ -194,7 +172,7 @@ enum BoardNodeFactory {
         rootNode.addChildNode(baseNode)
 
         let shadowPlate = SCNBox(width: width + 0.70, height: 0.025, length: length + 0.70, chamferRadius: 0.18)
-        shadowPlate.materials = [ScenePalette.shadowPlate]
+        shadowPlate.materials = [SquartSceneMaterials.shadowPlate]
 
         let shadowNode = SCNNode(geometry: shadowPlate)
         shadowNode.position = SCNVector3(0, -0.25, 0)
@@ -203,16 +181,18 @@ enum BoardNodeFactory {
         return rootNode
     }
 
-    private static func height(for state: CellState) -> CGFloat {
+    // MARK: - Geometry Lookup
+
+    private static func tileGeometry(for state: CellState) -> SCNGeometry {
         switch state {
-        case .outside:
-            return 0.01
         case .inactive:
-            return 0.07
+            return BoardGeometry.inactiveTile
         case .empty:
-            return 0.105
+            return BoardGeometry.emptyTile
         case .occupied:
-            return 0.10
+            return BoardGeometry.occupiedTile
+        case .outside:
+            return BoardGeometry.outsideTile
         }
     }
 
@@ -229,27 +209,7 @@ enum BoardNodeFactory {
         }
     }
 
-    private static func chamferRadius(for state: CellState) -> CGFloat {
-        switch state {
-        case .outside:
-            return 0
-        case .inactive:
-            return 0.045
-        case .empty, .occupied:
-            return 0.055
-        }
-    }
-
-    private static func baseMaterial(for state: CellState) -> SCNMaterial {
-        switch state {
-        case .outside:
-            return ScenePalette.outsideTile
-        case .inactive:
-            return ScenePalette.inactiveTile
-        case .empty, .occupied:
-            return ScenePalette.emptyTile
-        }
-    }
+    // MARK: - Names
 
     private static func position(from nodeName: String?) -> BoardPosition? {
         guard let nodeName else {
@@ -275,115 +235,149 @@ enum BoardNodeFactory {
     }
 }
 
-enum ScenePalette {
-    static let background = color(red: 0.035, green: 0.035, blue: 0.034)
-    static let environment = color(red: 0.62, green: 0.52, blue: 0.43)
+private enum PreviewStyle {
+    case human
+    case ai
 
-    static let boardBase = material(
-        color: color(red: 0.072, green: 0.067, blue: 0.061),
-        emission: color(red: 0.012, green: 0.009, blue: 0.006),
-        roughness: 0.82,
-        metalness: 0.08
-    )
-    static let shadowPlate = material(
-        color: color(red: 0.018, green: 0.017, blue: 0.016),
-        roughness: 0.96,
-        metalness: 0.0
-    )
-    static let emptyTile = material(
-        color: color(red: 0.185, green: 0.176, blue: 0.162),
-        emission: color(red: 0.010, green: 0.008, blue: 0.006),
-        roughness: 0.78,
-        metalness: 0.07
-    )
-    static let outsideTile = material(
-        color: color(red: 0.035, green: 0.035, blue: 0.035, alpha: 0),
-        roughness: 1,
-        metalness: 0,
-        transparency: 0
-    )
-    static let inactiveTile = material(
-        color: color(red: 0.096, green: 0.080, blue: 0.064),
-        emission: color(red: 0.010, green: 0.006, blue: 0.004),
-        roughness: 0.92,
-        metalness: 0.03
-    )
-    static let blockerCap = material(
-        color: color(red: 0.135, green: 0.105, blue: 0.078),
-        emission: color(red: 0.018, green: 0.010, blue: 0.005),
-        roughness: 0.88,
-        metalness: 0.05
-    )
-    static let horizontalDomino = material(
-        color: color(red: 0.49, green: 0.36, blue: 0.24),
-        emission: color(red: 0.045, green: 0.026, blue: 0.012),
-        roughness: 0.60,
-        metalness: 0.20
-    )
-    static let verticalDomino = material(
-        color: color(red: 0.23, green: 0.30, blue: 0.305),
-        emission: color(red: 0.014, green: 0.024, blue: 0.026),
-        roughness: 0.62,
-        metalness: 0.14
-    )
-    static let horizontalAccent = material(
-        color: color(red: 0.83, green: 0.65, blue: 0.42),
-        emission: color(red: 0.095, green: 0.055, blue: 0.020),
-        roughness: 0.46,
-        metalness: 0.28
-    )
-    static let verticalAccent = material(
-        color: color(red: 0.55, green: 0.65, blue: 0.65),
-        emission: color(red: 0.020, green: 0.035, blue: 0.035),
-        roughness: 0.48,
-        metalness: 0.18
-    )
-    static let previewFill = material(
-        color: color(red: 0.86, green: 0.62, blue: 0.34, alpha: 0.20),
-        emission: color(red: 0.10, green: 0.050, blue: 0.016),
-        roughness: 0.36,
-        metalness: 0.10,
-        transparency: 0.42
-    )
-    static let previewEdge = material(
-        color: color(red: 0.93, green: 0.72, blue: 0.46, alpha: 0.62),
-        emission: color(red: 0.15, green: 0.080, blue: 0.026),
-        roughness: 0.42,
-        metalness: 0.20,
-        transparency: 0.70
-    )
-
-    private static func material(
-        color: PlatformColor,
-        emission: PlatformColor? = nil,
-        roughness: CGFloat,
-        metalness: CGFloat,
-        transparency: CGFloat = 1
-    ) -> SCNMaterial {
-        let material = SCNMaterial()
-        material.lightingModel = .physicallyBased
-        material.diffuse.contents = color
-        material.roughness.contents = roughness
-        material.metalness.contents = metalness
-        material.emission.contents = emission ?? PlatformColor.black
-        material.transparency = transparency
-        material.blendMode = transparency < 1 ? .alpha : .replace
-        return material
+    var fillGeometry: SCNGeometry {
+        switch self {
+        case .human:
+            return BoardGeometry.humanPreviewFill
+        case .ai:
+            return BoardGeometry.aiPreviewFill
+        }
     }
 
-    private static func color(red: CGFloat, green: CGFloat, blue: CGFloat) -> PlatformColor {
-        PlatformColor(red: red, green: green, blue: blue, alpha: 1)
+    var horizontalRailGeometry: SCNGeometry {
+        switch self {
+        case .human:
+            return BoardGeometry.humanPreviewHorizontalRail
+        case .ai:
+            return BoardGeometry.aiPreviewHorizontalRail
+        }
     }
 
-    private static func color(red: CGFloat, green: CGFloat, blue: CGFloat, alpha: CGFloat) -> PlatformColor {
-        PlatformColor(red: red, green: green, blue: blue, alpha: alpha)
+    var verticalRailGeometry: SCNGeometry {
+        switch self {
+        case .human:
+            return BoardGeometry.humanPreviewVerticalRail
+        case .ai:
+            return BoardGeometry.aiPreviewVerticalRail
+        }
     }
 }
 
-#if os(iOS)
-import UIKit
-typealias PlatformColor = UIColor
-#else
-import AppKit
-typealias PlatformColor = NSColor
-#endif
+private enum BoardGeometry {
+    static let emptyTile = box(
+        width: 0.88,
+        height: 0.105,
+        length: 0.88,
+        chamferRadius: 0.055,
+        material: SquartSceneMaterials.emptyTile
+    )
+
+    static let occupiedTile = box(
+        width: 0.88,
+        height: 0.10,
+        length: 0.88,
+        chamferRadius: 0.055,
+        material: SquartSceneMaterials.emptyTile
+    )
+
+    static let inactiveTile = box(
+        width: 0.88,
+        height: 0.07,
+        length: 0.88,
+        chamferRadius: 0.045,
+        material: SquartSceneMaterials.inactiveBlocker
+    )
+
+    static let outsideTile = box(
+        width: 0.88,
+        height: 0.01,
+        length: 0.88,
+        chamferRadius: 0,
+        material: SquartSceneMaterials.outsideTile
+    )
+
+    static let humanPreviewFill = box(
+        width: 0.72,
+        height: 0.018,
+        length: 0.72,
+        chamferRadius: 0.04,
+        material: SquartSceneMaterials.humanPreviewFill
+    )
+
+    static let humanPreviewHorizontalRail = previewHorizontalRail(material: SquartSceneMaterials.humanPreviewEdge)
+    static let humanPreviewVerticalRail = previewVerticalRail(material: SquartSceneMaterials.humanPreviewEdge)
+    static let aiPreviewFill = box(
+        width: 0.72,
+        height: 0.018,
+        length: 0.72,
+        chamferRadius: 0.04,
+        material: SquartSceneMaterials.aiPreviewFill
+    )
+
+    static let aiPreviewHorizontalRail = previewHorizontalRail(material: SquartSceneMaterials.aiPreviewEdge)
+    static let aiPreviewVerticalRail = previewVerticalRail(material: SquartSceneMaterials.aiPreviewEdge)
+
+    static let horizontalDomino = box(
+        width: 0.76,
+        height: 0.18,
+        length: 0.32,
+        chamferRadius: 0.07,
+        material: SquartSceneMaterials.horizontalPiece
+    )
+
+    static let verticalDomino = box(
+        width: 0.32,
+        height: 0.18,
+        length: 0.76,
+        chamferRadius: 0.07,
+        material: SquartSceneMaterials.verticalPiece
+    )
+
+    static let horizontalDominoTopLine = box(
+        width: 0.46,
+        height: 0.012,
+        length: 0.045,
+        chamferRadius: 0.008,
+        material: SquartSceneMaterials.horizontalPieceAccent
+    )
+
+    static let verticalDominoTopLine = box(
+        width: 0.045,
+        height: 0.012,
+        length: 0.46,
+        chamferRadius: 0.008,
+        material: SquartSceneMaterials.verticalPieceAccent
+    )
+
+    static let blockerCap = box(
+        width: 0.58,
+        height: 0.035,
+        length: 0.58,
+        chamferRadius: 0.035,
+        material: SquartSceneMaterials.blockerCap
+    )
+
+    private static func previewHorizontalRail(material: SCNMaterial) -> SCNGeometry {
+        box(width: 0.76, height: 0.026, length: 0.035, chamferRadius: 0.012, material: material)
+    }
+
+    private static func previewVerticalRail(material: SCNMaterial) -> SCNGeometry {
+        box(width: 0.035, height: 0.026, length: 0.76, chamferRadius: 0.012, material: material)
+    }
+
+    private static func box(
+        width: CGFloat,
+        height: CGFloat,
+        length: CGFloat,
+        chamferRadius: CGFloat,
+        material: SCNMaterial
+    ) -> SCNGeometry {
+        let box = SCNBox(width: width, height: height, length: length, chamferRadius: chamferRadius)
+        box.materials = [material]
+        return box
+    }
+}

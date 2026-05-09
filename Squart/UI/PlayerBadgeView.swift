@@ -10,7 +10,7 @@ struct PlayerBadgeView: View {
                 .fill(accentColor)
                 .frame(width: 22, height: 7)
 
-            Text(isThinking ? "AI thinking..." : "\(player.displayName) to move")
+            Text(isThinking ? "AI studying the board..." : "\(player.displayName) to move")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.92))
                 .lineLimit(1)
@@ -20,7 +20,7 @@ struct PlayerBadgeView: View {
         .frame(height: 34)
         .background(
             Capsule()
-                .fill(Color.white.opacity(0.07))
+                .fill(SquartTheme.Colors.panelGraphite)
                 .overlay(Capsule().stroke(accentColor.opacity(0.30), lineWidth: 1))
         )
     }
@@ -28,9 +28,9 @@ struct PlayerBadgeView: View {
     private var accentColor: Color {
         switch player {
         case .horizontal:
-            return Color(red: 0.78, green: 0.66, blue: 0.52)
+            return SquartTheme.Colors.cappuccino
         case .vertical:
-            return Color(red: 0.58, green: 0.68, blue: 0.70)
+            return SquartTheme.Colors.steel
         }
     }
 }

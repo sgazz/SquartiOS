@@ -19,8 +19,8 @@ struct GameHUDView: View {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 7) {
                     Text("Squart")
-                        .font(.system(size: 28, weight: .semibold, design: .serif))
-                        .foregroundStyle(.white.opacity(0.94))
+                        .font(SquartTheme.titleFont(size: 28))
+                        .foregroundStyle(SquartTheme.Colors.primaryText)
 
                     PlayerBadgeView(player: currentPlayer, isThinking: isAITurnPending)
                 }
@@ -30,11 +30,11 @@ struct GameHUDView: View {
                 VStack(alignment: .trailing, spacing: 6) {
                     Text("\(moveCount) moves")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Color(red: 0.78, green: 0.66, blue: 0.52))
+                        .foregroundStyle(SquartTheme.Colors.cappuccino)
 
                     Text(summaryText)
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.58))
+                        .foregroundStyle(SquartTheme.Colors.mutedText)
                         .multilineTextAlignment(.trailing)
                         .lineLimit(2)
                 }
@@ -46,7 +46,7 @@ struct GameHUDView: View {
                 }
             }
             .pickerStyle(.segmented)
-            .tint(Color(red: 0.78, green: 0.66, blue: 0.52))
+            .tint(SquartTheme.Colors.cappuccino)
 
             HStack(spacing: 10) {
                 Button(action: onUndoLastMove) {
@@ -75,14 +75,7 @@ struct GameHUDView: View {
             }
         }
         .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.white.opacity(0.055))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Color.white.opacity(0.09), lineWidth: 1)
-                )
-        )
+        .squartCard(cornerRadius: 16, fill: SquartTheme.Colors.panelGraphite, stroke: SquartTheme.Colors.borderGraphite)
         .padding(.horizontal, 16)
     }
 
@@ -107,7 +100,7 @@ private struct HUDButtonLabel: View {
     var body: some View {
         Text(title)
             .font(.system(size: 13, weight: .medium))
-            .foregroundStyle(.white.opacity(isEnabled ? 0.86 : 0.34))
+            .foregroundStyle(Color.white.opacity(isEnabled ? 0.86 : 0.34))
             .lineLimit(1)
             .minimumScaleFactor(0.78)
             .frame(maxWidth: .infinity)
@@ -115,7 +108,7 @@ private struct HUDButtonLabel: View {
             .background(
                 Capsule()
                     .stroke(Color.white.opacity(0.14), lineWidth: 1)
-                    .background(Capsule().fill(Color.white.opacity(isEnabled ? 0.045 : 0.025)))
+                    .background(Capsule().fill(SquartTheme.Colors.subtlePanelGraphite.opacity(isEnabled ? 1 : 0.56)))
             )
     }
 }

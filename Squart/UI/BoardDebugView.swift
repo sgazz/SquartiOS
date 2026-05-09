@@ -10,28 +10,27 @@ struct BoardDebugView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let cellSize = cellSize(for: proxy.size)
-            let columns = Array(
-                repeating: GridItem(.fixed(cellSize), spacing: spacing),
-                count: board.columns
-            )
+            let side = boardSide(for: proxy.size)
+            let cellSize = cellSize(for: side)
 
-            LazyVGrid(columns: columns, spacing: spacing) {
+            VStack(spacing: spacing) {
                 ForEach(0..<board.rows, id: \.self) { row in
-                    ForEach(0..<board.columns, id: \.self) { column in
-                        let position = BoardPosition(row: row, column: column)
-                        CellDebugView(
-                            state: board.cellState(at: position) ?? .inactive,
-                            isValidOrigin: board.isValidMove(Move(player: currentPlayer, origin: position))
-                        ) {
-                            onTapPosition(position)
+                    HStack(spacing: spacing) {
+                        ForEach(0..<board.columns, id: \.self) { column in
+                            let position = BoardPosition(row: row, column: column)
+                            CellDebugView(
+                                state: board.cellState(at: position) ?? .inactive,
+                                isValidOrigin: board.isValidMove(Move(player: currentPlayer, origin: position))
+                            ) {
+                                onTapPosition(position)
+                            }
+                            .frame(width: cellSize, height: cellSize)
+                            .disabled(!isTappable(position) || isFinished)
                         }
-                        .frame(width: cellSize, height: cellSize)
-                        .disabled(!isTappable(position) || isFinished)
                     }
                 }
             }
-            .frame(width: boardWidth(cellSize: cellSize), height: boardWidth(cellSize: cellSize))
+            .frame(width: gridWidth(cellSize: cellSize), height: gridHeight(cellSize: cellSize))
             .padding(10)
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -41,24 +40,33 @@ struct BoardDebugView: View {
                             .stroke(Color.white.opacity(0.08), lineWidth: 1)
                     )
             )
+            .frame(width: side, height: side)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         }
-        .aspectRatio(1, contentMode: .fit)
-        .frame(maxWidth: 560)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func isTappable(_ position: BoardPosition) -> Bool {
         board.isActiveEmptyCell(at: position)
     }
 
-    private func cellSize(for size: CGSize) -> CGFloat {
-        let availableWidth = min(size.width, size.height) - 20
-        let totalSpacing = spacing * CGFloat(board.columns - 1)
-        return max(18, floor((availableWidth - totalSpacing) / CGFloat(board.columns)))
+    private func boardSide(for size: CGSize) -> CGFloat {
+        max(0, min(size.width, size.height))
     }
 
-    private func boardWidth(cellSize: CGFloat) -> CGFloat {
+    private func cellSize(for boardSide: CGFloat) -> CGFloat {
+        let availableWidth = max(0, boardSide - 20)
+        let maxDimension = max(board.rows, board.columns)
+        let totalSpacing = spacing * CGFloat(maxDimension - 1)
+        return max(8, floor((availableWidth - totalSpacing) / CGFloat(maxDimension)))
+    }
+
+    private func gridWidth(cellSize: CGFloat) -> CGFloat {
         cellSize * CGFloat(board.columns) + spacing * CGFloat(board.columns - 1)
+    }
+
+    private func gridHeight(cellSize: CGFloat) -> CGFloat {
+        cellSize * CGFloat(board.rows) + spacing * CGFloat(board.rows - 1)
     }
 }
 

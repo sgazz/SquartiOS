@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GameOverOverlay: View {
     let winner: Player
+    let stats: MatchStats
     let onUndo: (() -> Void)?
     let onRematch: () -> Void
     let onChangeSetup: () -> Void
@@ -14,18 +15,20 @@ struct GameOverOverlay: View {
             VStack(spacing: 22) {
                 VStack(spacing: 8) {
                     Text("Game Over")
-                        .font(.system(size: 34, weight: .semibold, design: .serif))
-                        .foregroundStyle(.white.opacity(0.94))
+                        .font(SquartTheme.titleFont(size: 34))
+                        .foregroundStyle(SquartTheme.Colors.primaryText)
 
                     Text("\(winner.displayName) wins")
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(Color(red: 0.78, green: 0.66, blue: 0.52))
+                        .foregroundStyle(SquartTheme.Colors.cappuccino)
 
                     Text(resultLine)
                         .font(.system(size: 15, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.58))
+                        .foregroundStyle(SquartTheme.Colors.mutedText)
                         .multilineTextAlignment(.center)
                 }
+
+                MatchStatsView(stats: stats)
 
                 VStack(spacing: 10) {
                     if let onUndo {
@@ -38,16 +41,8 @@ struct GameOverOverlay: View {
                     HStack(spacing: 12) {
                         Button(action: onRematch) {
                             Text("Rematch")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundStyle(Color(red: 0.16, green: 0.12, blue: 0.09))
-                                .frame(width: 132, height: 48)
-                                .background(
-                                    Capsule()
-                                        .fill(Color(red: 0.78, green: 0.66, blue: 0.52))
-                                        .shadow(color: Color(red: 0.78, green: 0.66, blue: 0.52).opacity(0.16), radius: 16)
-                                )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(SquartPrimaryButtonStyle(width: 132, height: 48))
 
                         Button(action: onChangeSetup) {
                             OverlaySecondaryButtonLabel(title: "Change Setup", width: 142)
@@ -59,15 +54,15 @@ struct GameOverOverlay: View {
             .padding(28)
             .frame(maxWidth: 390)
             .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: SquartTheme.Radius.overlay, style: .continuous)
                     .fill(.ultraThinMaterial)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(Color(red: 0.06, green: 0.055, blue: 0.05).opacity(0.72))
+                        RoundedRectangle(cornerRadius: SquartTheme.Radius.overlay, style: .continuous)
+                            .fill(SquartTheme.Colors.sheetBackground.opacity(0.72))
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .stroke(Color(red: 0.78, green: 0.66, blue: 0.52).opacity(0.22), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: SquartTheme.Radius.overlay, style: .continuous)
+                            .stroke(SquartTheme.Colors.cappuccino.opacity(0.22), lineWidth: 1)
                     )
             )
             .padding(24)
@@ -84,6 +79,75 @@ struct GameOverOverlay: View {
     }
 }
 
+struct MatchStats: Equatable {
+    let totalMoves: Int
+    let horizontalMoves: Int
+    let verticalMoves: Int
+    let boardText: String
+    let modeText: String
+}
+
+private struct MatchStatsView: View {
+    let stats: MatchStats
+
+    var body: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                MatchStatPill(title: "Moves", value: "\(stats.totalMoves)")
+                MatchStatPill(title: "Horizontal", value: "\(stats.horizontalMoves)")
+                MatchStatPill(title: "Vertical", value: "\(stats.verticalMoves)")
+            }
+
+            VStack(spacing: 5) {
+                MatchStatLine(title: "Board", value: stats.boardText)
+                MatchStatLine(title: "Mode", value: stats.modeText)
+            }
+        }
+        .padding(12)
+        .squartCard(fill: SquartTheme.Colors.panelGraphite)
+    }
+}
+
+private struct MatchStatPill: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text(title.uppercased())
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(SquartTheme.Colors.quietText)
+
+            Text(value)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(SquartTheme.Colors.cappuccino)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+private struct MatchStatLine: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(title)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(SquartTheme.Colors.quietText)
+                .frame(width: 42, alignment: .leading)
+
+            Text(value)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(SquartTheme.Colors.bodyText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+
+            Spacer(minLength: 0)
+        }
+    }
+}
+
 private struct OverlaySecondaryButtonLabel: View {
     let title: String
     let width: CGFloat
@@ -91,12 +155,12 @@ private struct OverlaySecondaryButtonLabel: View {
     var body: some View {
         Text(title)
             .font(.system(size: 16, weight: .medium))
-            .foregroundStyle(.white.opacity(0.86))
+            .foregroundStyle(SquartTheme.Colors.bodyText)
             .frame(width: width, height: 48)
             .background(
                 Capsule()
                     .stroke(Color.white.opacity(0.16), lineWidth: 1)
-                    .background(Capsule().fill(Color.white.opacity(0.045)))
+                    .background(Capsule().fill(SquartTheme.Colors.subtlePanelGraphite))
             )
     }
 }
@@ -104,6 +168,13 @@ private struct OverlaySecondaryButtonLabel: View {
 #Preview {
     GameOverOverlay(
         winner: .horizontal,
+        stats: MatchStats(
+            totalMoves: 18,
+            horizontalMoves: 9,
+            verticalMoves: 9,
+            boardText: "10x10 · Diamond · 18% blockers",
+            modeText: "Player vs AI · Hard"
+        ),
         onUndo: {},
         onRematch: {},
         onChangeSetup: {}

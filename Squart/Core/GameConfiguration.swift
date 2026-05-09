@@ -1,4 +1,6 @@
 nonisolated struct GameConfiguration: Equatable, Sendable {
+    static let standard = GameConfiguration()
+
     let mode: GameMode
     let aiDifficulty: AIDifficulty
     let boardShape: BoardShape

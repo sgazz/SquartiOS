@@ -7,42 +7,58 @@ final class SquartSceneController {
     private let boardRootNode = SCNNode()
     private var lastBoard: SquartBoard?
     private var lastPreviewPositions: Set<BoardPosition> = []
+    private var lastAIPreviewPositions: Set<BoardPosition> = []
     private var lastMoveAnimationToken = 0
 
     init() {
         self.cameraController = CameraController(scene: scene)
-        scene.background.contents = ScenePalette.background
+        scene.background.contents = SquartSceneMaterials.background
         scene.rootNode.addChildNode(boardRootNode)
         scene.fogStartDistance = 24
         scene.fogEndDistance = 42
         scene.fogDensityExponent = 0.55
-        scene.fogColor = ScenePalette.background
+        scene.fogColor = SquartSceneMaterials.background
         addLighting()
     }
 
     func update(
         board: SquartBoard,
         previewPositions: Set<BoardPosition>,
+        aiPreviewPositions: Set<BoardPosition>,
         lastMovePositions: Set<BoardPosition>,
-        moveAnimationToken: Int
+        moveAnimationToken: Int,
+        viewportSize: CGSize
     ) {
-        guard
+        let didUpdateCamera = cameraController.configureForBoard(
+            rows: board.rows,
+            columns: board.columns,
+            viewportSize: viewportSize
+        )
+        let needsBoardRefresh =
             board != lastBoard ||
-                previewPositions != lastPreviewPositions ||
-                moveAnimationToken != lastMoveAnimationToken
-        else {
+            previewPositions != lastPreviewPositions ||
+            aiPreviewPositions != lastAIPreviewPositions ||
+            moveAnimationToken != lastMoveAnimationToken
+
+        guard needsBoardRefresh || didUpdateCamera else {
+            return
+        }
+
+        guard needsBoardRefresh else {
             return
         }
 
         let shouldAnimateMove = moveAnimationToken != lastMoveAnimationToken && !lastMovePositions.isEmpty
         lastBoard = board
         lastPreviewPositions = previewPositions
+        lastAIPreviewPositions = aiPreviewPositions
         lastMoveAnimationToken = moveAnimationToken
         boardRootNode.childNodes.forEach { $0.removeFromParentNode() }
         boardRootNode.addChildNode(
             BoardNodeFactory.makeBoardNode(
                 from: board,
-                previewPositions: previewPositions
+                previewPositions: previewPositions,
+                aiPreviewPositions: aiPreviewPositions
             )
         )
 
@@ -89,8 +105,8 @@ final class SquartSceneController {
     private func addLighting() {
         let ambientLight = SCNLight()
         ambientLight.type = .ambient
-        ambientLight.intensity = 130
-        ambientLight.temperature = 4_200
+        ambientLight.intensity = 190
+        ambientLight.temperature = 4_300
 
         let ambientNode = SCNNode()
         ambientNode.light = ambientLight
@@ -98,15 +114,15 @@ final class SquartSceneController {
 
         let keyLight = SCNLight()
         keyLight.type = .area
-        keyLight.intensity = 980
-        keyLight.temperature = 3_750
+        keyLight.intensity = 680
+        keyLight.temperature = 3_850
         keyLight.areaType = .rectangle
-        keyLight.areaExtents = simd_float3(9, 7, 1)
+        keyLight.areaExtents = simd_float3(11, 8, 1)
         keyLight.castsShadow = true
         keyLight.shadowMode = .deferred
-        keyLight.shadowRadius = 8
+        keyLight.shadowRadius = 9
         keyLight.shadowSampleCount = 24
-        keyLight.shadowColor = PlatformColor.black.withAlphaComponent(0.36)
+        keyLight.shadowColor = PlatformColor.black.withAlphaComponent(0.28)
 
         let keyNode = SCNNode()
         keyNode.light = keyLight
@@ -116,8 +132,8 @@ final class SquartSceneController {
 
         let fillLight = SCNLight()
         fillLight.type = .omni
-        fillLight.intensity = 105
-        fillLight.temperature = 4_800
+        fillLight.intensity = 210
+        fillLight.temperature = 4_700
 
         let fillNode = SCNNode()
         fillNode.light = fillLight
@@ -126,7 +142,7 @@ final class SquartSceneController {
 
         let rimLight = SCNLight()
         rimLight.type = .directional
-        rimLight.intensity = 120
+        rimLight.intensity = 85
         rimLight.temperature = 5_600
 
         let rimNode = SCNNode()
@@ -135,7 +151,7 @@ final class SquartSceneController {
         rimNode.look(at: SCNVector3(0, 0, 0))
         scene.rootNode.addChildNode(rimNode)
 
-        scene.lightingEnvironment.contents = ScenePalette.environment
-        scene.lightingEnvironment.intensity = 0.16
+        scene.lightingEnvironment.contents = SquartSceneMaterials.environment
+        scene.lightingEnvironment.intensity = 0.22
     }
 }

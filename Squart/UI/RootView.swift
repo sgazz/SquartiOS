@@ -8,6 +8,7 @@ struct RootView: View {
     }
 
     @State private var screen: Screen = .landing
+    @State private var isShowingSettings = false
 
     var body: some View {
         ZStack {
@@ -24,12 +25,12 @@ struct RootView: View {
 
                         VStack(spacing: 10) {
                             Text("Squart")
-                                .font(.system(size: 52, weight: .semibold, design: .serif))
-                                .foregroundStyle(.white.opacity(0.95))
+                                .font(SquartTheme.titleFont(size: 52))
+                                .foregroundStyle(SquartTheme.Colors.primaryText)
 
                             Text("A quiet tactical game of space, direction, and denial.")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundStyle(.white.opacity(0.58))
+                                .foregroundStyle(SquartTheme.Colors.mutedText)
                                 .multilineTextAlignment(.center)
                                 .lineSpacing(3)
                                 .frame(maxWidth: 330)
@@ -39,16 +40,8 @@ struct RootView: View {
                             screen = .setup
                         } label: {
                             Text("Start Game")
-                                .font(.system(size: 17, weight: .medium))
-                                .foregroundStyle(Color(red: 0.16, green: 0.12, blue: 0.09))
-                                .frame(width: 178, height: 52)
-                                .background(
-                                    Capsule()
-                                        .fill(Color(red: 0.78, green: 0.66, blue: 0.52))
-                                        .shadow(color: Color(red: 0.78, green: 0.66, blue: 0.52).opacity(0.18), radius: 18)
-                                )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(SquartPrimaryButtonStyle())
                         .padding(.top, 6)
                     }
 
@@ -56,7 +49,7 @@ struct RootView: View {
 
                     Text("Native iOS prototype")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.36))
+                        .foregroundStyle(SquartTheme.Colors.quietText)
                         .padding(.bottom, 20)
                 }
                 .padding(32)
@@ -72,20 +65,39 @@ struct RootView: View {
                 }
             }
         }
+        .overlay(alignment: .topTrailing) {
+            if case .landing = screen {
+                Button {
+                    Haptics.selection()
+                    isShowingSettings = true
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(SquartTheme.Colors.bodyText)
+                        .frame(width: 42, height: 42)
+                        .background(
+                            Circle()
+                                .fill(SquartTheme.Colors.panelGraphite)
+                                .overlay(Circle().stroke(SquartTheme.Colors.borderGraphite, lineWidth: 1))
+                        )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Settings")
+                .padding(.top, 22)
+                .padding(.trailing, 22)
+            }
+        }
+        .sheet(isPresented: $isShowingSettings) {
+            SettingsView()
+                .presentationDetents([.height(350)])
+                .presentationDragIndicator(.visible)
+        }
     }
 }
 
 private struct PremiumBackground: View {
     var body: some View {
-        LinearGradient(
-            colors: [
-                Color(red: 0.07, green: 0.07, blue: 0.07),
-                Color(red: 0.12, green: 0.11, blue: 0.10),
-                Color(red: 0.05, green: 0.05, blue: 0.05)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+        SquartTheme.appBackground
         .ignoresSafeArea()
     }
 }

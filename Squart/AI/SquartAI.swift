@@ -1,6 +1,7 @@
 nonisolated struct SquartAI: Sendable {
     private let randomAI = RandomSquartAI()
     private let greedyAI = GreedySquartAI()
+    private let minimaxAI = MinimaxSquartAI()
 
     init() {}
 
@@ -15,6 +16,9 @@ nonisolated struct SquartAI: Sendable {
             return randomAI.move(for: player, on: board)
         case .medium:
             return greedyAI.move(for: player, opponent: opponent, on: board)
+        case .hard:
+            return minimaxAI.move(for: player, opponent: opponent, on: board) ??
+                randomAI.move(for: player, on: board)
         }
     }
 }

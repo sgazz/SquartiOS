@@ -5,6 +5,7 @@ import UIKit
 struct SquartSceneView: UIViewRepresentable {
     let board: SquartBoard
     let previewPositions: Set<BoardPosition>
+    let aiPreviewPositions: Set<BoardPosition>
     let lastMovePositions: Set<BoardPosition>
     let moveAnimationToken: Int
     let resetCameraToken: Int
@@ -29,8 +30,10 @@ struct SquartSceneView: UIViewRepresentable {
         context.coordinator.controller.update(
             board: board,
             previewPositions: previewPositions,
+            aiPreviewPositions: aiPreviewPositions,
             lastMovePositions: lastMovePositions,
-            moveAnimationToken: moveAnimationToken
+            moveAnimationToken: moveAnimationToken,
+            viewportSize: sceneView.bounds.size
         )
         return sceneView
     }
@@ -41,8 +44,10 @@ struct SquartSceneView: UIViewRepresentable {
         context.coordinator.controller.update(
             board: board,
             previewPositions: previewPositions,
+            aiPreviewPositions: aiPreviewPositions,
             lastMovePositions: lastMovePositions,
-            moveAnimationToken: moveAnimationToken
+            moveAnimationToken: moveAnimationToken,
+            viewportSize: sceneView.bounds.size
         )
     }
 

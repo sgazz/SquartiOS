@@ -1,3 +1,4 @@
+import Foundation
 import XCTest
 @testable import Squart
 
@@ -120,6 +121,21 @@ final class SquartTests: XCTestCase {
         XCTAssertFalse(game.canUndo)
     }
 
+    func testHardAIChoosesLegalImmediateWinningMove() throws {
+        let board = SquartBoard(rows: 2, columns: 2)
+        let ai = SquartAI()
+
+        let move = try XCTUnwrap(
+            ai.move(for: .vertical, opponent: .horizontal, on: board, difficulty: .hard)
+        )
+
+        XCTAssertTrue(board.isValidMove(move))
+
+        var simulatedBoard = board
+        XCTAssertTrue(simulatedBoard.apply(move))
+        XCTAssertFalse(simulatedBoard.hasValidMove(for: .horizontal))
+    }
+
     func testDiamondUsesOutsideCellsAndInternalBlockers() throws {
         let board = try XCTUnwrap(
             BoardGenerator.board(for: .diamond(size: 5), inactiveCellRatio: 0.25)
@@ -138,6 +154,110 @@ final class SquartTests: XCTestCase {
             .count,
             0
         )
+    }
+
+    func testCircleUsesOutsideCellsAndStartsPlayable() throws {
+        let board = try XCTUnwrap(
+            BoardGenerator.board(for: .circle(diameter: 8), inactiveCellRatio: 0.18)
+        )
+
+        let states = (0..<board.rows).flatMap { row in
+            (0..<board.columns).compactMap { column in
+                board.cellState(at: BoardPosition(row: row, column: column))
+            }
+        }
+
+        XCTAssertTrue(states.contains(.outside))
+        XCTAssertTrue(states.contains(.empty))
+        XCTAssertTrue(board.hasValidMove(for: .horizontal))
+        XCTAssertTrue(board.hasValidMove(for: .vertical))
+    }
+
+    func testTriangleUsesOutsideCellsAndStartsPlayable() throws {
+        let board = try XCTUnwrap(
+            BoardGenerator.board(for: .triangle(size: 10), inactiveCellRatio: 0.18)
+        )
+
+        let states = (0..<board.rows).flatMap { row in
+            (0..<board.columns).compactMap { column in
+                board.cellState(at: BoardPosition(row: row, column: column))
+            }
+        }
+
+        XCTAssertTrue(states.contains(.outside))
+        XCTAssertTrue(states.contains(.empty))
+        XCTAssertTrue(board.hasValidMove(for: .horizontal))
+        XCTAssertTrue(board.hasValidMove(for: .vertical))
+    }
+
+    func testGameConfigurationStoreRoundTripsSavedConfiguration() throws {
+        let suiteName = "SquartTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        let store = GameConfigurationStore(defaults: defaults)
+        let configuration = GameConfiguration(
+            mode: .playerVsAI,
+            aiDifficulty: .hard,
+            boardShape: .triangle(size: 12),
+            boardSize: 12,
+            inactiveCellRatio: 0.25
+        )
+
+        store.save(configuration)
+
+        XCTAssertEqual(store.load(), configuration)
+    }
+
+    func testGameConfigurationStoreFallsBackWhenStoredValuesAreInvalid() throws {
+        let suiteName = "SquartTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        defaults.set("invalid", forKey: "squart.gameConfiguration.mode")
+        defaults.set("hard", forKey: "squart.gameConfiguration.aiDifficulty")
+        defaults.set(12, forKey: "squart.gameConfiguration.boardSize")
+        defaults.set(0.25, forKey: "squart.gameConfiguration.inactiveCellRatio")
+        defaults.set("triangle", forKey: "squart.gameConfiguration.boardShape")
+
+        let store = GameConfigurationStore(defaults: defaults)
+
+        XCTAssertEqual(store.load(), .standard)
+    }
+
+    func testAppSettingsStoreDefaultsHapticsOn() throws {
+        let suiteName = "SquartTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        let store = AppSettingsStore(defaults: defaults)
+
+        XCTAssertTrue(store.load().isHapticsEnabled)
+        XCTAssertFalse(store.load().isSoundEffectsEnabled)
+    }
+
+    func testAppSettingsStorePersistsFeedbackPreferences() throws {
+        let suiteName = "SquartTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        let store = AppSettingsStore(defaults: defaults)
+
+        store.save(AppSettings(isHapticsEnabled: false, isSoundEffectsEnabled: true))
+        XCTAssertFalse(store.load().isHapticsEnabled)
+        XCTAssertTrue(store.load().isSoundEffectsEnabled)
+
+        store.save(AppSettings(isHapticsEnabled: true, isSoundEffectsEnabled: false))
+        XCTAssertTrue(store.load().isHapticsEnabled)
+        XCTAssertFalse(store.load().isSoundEffectsEnabled)
     }
 }
 

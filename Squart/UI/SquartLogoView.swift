@@ -1,13 +1,13 @@
 import SwiftUI
 
 struct SquartLogoView: View {
-    private let cappuccino = Color(red: 0.78, green: 0.66, blue: 0.52)
-    private let bronze = Color(red: 0.58, green: 0.43, blue: 0.30)
-    private let graphite = Color(red: 0.12, green: 0.11, blue: 0.10)
+    private let cappuccino = SquartTheme.Colors.cappuccino
+    private let bronze = SquartTheme.Colors.bronze
+    private let graphite = SquartTheme.Colors.backgroundMid
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
+            RoundedRectangle(cornerRadius: SquartTheme.Radius.logo, style: .continuous)
                 .fill(
                     LinearGradient(
                         colors: [
@@ -19,7 +19,7 @@ struct SquartLogoView: View {
                     )
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    RoundedRectangle(cornerRadius: SquartTheme.Radius.logo, style: .continuous)
                         .stroke(cappuccino.opacity(0.20), lineWidth: 1)
                 )
                 .shadow(color: cappuccino.opacity(0.12), radius: 28, y: 14)
@@ -76,11 +76,11 @@ private struct LogoTile: View {
     let lift: CGFloat
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 7, style: .continuous)
+        RoundedRectangle(cornerRadius: SquartTheme.Radius.small - 1, style: .continuous)
             .fill(fill)
             .frame(width: size, height: size)
             .overlay(
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                RoundedRectangle(cornerRadius: SquartTheme.Radius.small - 1, style: .continuous)
                     .stroke(Color.white.opacity(0.10), lineWidth: 1)
             )
             .shadow(color: Color.black.opacity(0.22), radius: 8, y: 4 + lift)
@@ -97,7 +97,7 @@ private struct DominoBar: View {
     let lift: CGFloat
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 8, style: .continuous)
+        RoundedRectangle(cornerRadius: SquartTheme.Radius.small, style: .continuous)
             .fill(
                 LinearGradient(
                     colors: [
@@ -110,7 +110,7 @@ private struct DominoBar: View {
             )
             .frame(width: width, height: height)
             .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: SquartTheme.Radius.small, style: .continuous)
                     .stroke(Color.white.opacity(0.16), lineWidth: 1)
             )
             .shadow(color: Color.black.opacity(0.30), radius: 10, y: 5 + lift)
@@ -120,7 +120,7 @@ private struct DominoBar: View {
 
 #Preview {
     ZStack {
-        Color(red: 0.06, green: 0.055, blue: 0.05)
+        SquartTheme.Colors.sheetBackground
             .ignoresSafeArea()
 
         SquartLogoView()

@@ -1,6 +1,6 @@
 enum GameBoardMode: String, CaseIterable, Identifiable {
-    case debug2D = "2D Debug"
-    case preview3D = "3D Preview"
+    case debug2D = "Classic"
+    case preview3D = "3D Board"
 
     var id: Self { self }
 }

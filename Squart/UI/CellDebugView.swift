@@ -23,13 +23,19 @@ struct CellDebugView: View {
     private var symbol: some View {
         switch state {
         case .occupied(.horizontal):
-            Capsule()
-                .fill(Color(red: 0.96, green: 0.82, blue: 0.62).opacity(0.86))
-                .frame(width: 22, height: 6)
+            GeometryReader { proxy in
+                Capsule()
+                    .fill(Color(red: 0.96, green: 0.82, blue: 0.62).opacity(0.86))
+                    .frame(width: proxy.size.width * 0.68, height: max(4, proxy.size.height * 0.18))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
         case .occupied(.vertical):
-            Capsule()
-                .fill(Color(red: 0.58, green: 0.68, blue: 0.72).opacity(0.9))
-                .frame(width: 6, height: 22)
+            GeometryReader { proxy in
+                Capsule()
+                    .fill(Color(red: 0.58, green: 0.68, blue: 0.72).opacity(0.9))
+                    .frame(width: max(4, proxy.size.width * 0.18), height: proxy.size.height * 0.68)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
         case .empty, .inactive, .outside:
             EmptyView()
         }

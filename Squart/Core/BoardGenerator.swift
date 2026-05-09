@@ -32,6 +32,18 @@ nonisolated enum BoardGenerator {
                 playableCells: diamondCells(size: size),
                 inactiveCellRatio: inactiveCellRatio
             )
+        case .triangle(let size):
+            return board(
+                size: size,
+                playableCells: triangleCells(size: size),
+                inactiveCellRatio: inactiveCellRatio
+            )
+        case .circle(let diameter):
+            return board(
+                size: diameter,
+                playableCells: circleCells(size: diameter),
+                inactiveCellRatio: inactiveCellRatio
+            )
         default:
             return nil
         }
@@ -100,6 +112,50 @@ nonisolated enum BoardGenerator {
                 if distance <= radius {
                     cells.insert(BoardPosition(row: row, column: column))
                 }
+            }
+        }
+
+        return cells
+    }
+
+    private static func circleCells(size: Int) -> Set<BoardPosition> {
+        guard size > 0 else {
+            return []
+        }
+
+        let center = Double(size - 1) / 2
+        let radius = Double(size) / 2
+        var cells: Set<BoardPosition> = []
+
+        for row in 0..<size {
+            for column in 0..<size {
+                let rowDistance = Double(row) - center
+                let columnDistance = Double(column) - center
+                let distance = (rowDistance * rowDistance + columnDistance * columnDistance).squareRoot()
+
+                if distance <= radius {
+                    cells.insert(BoardPosition(row: row, column: column))
+                }
+            }
+        }
+
+        return cells
+    }
+
+    private static func triangleCells(size: Int) -> Set<BoardPosition> {
+        guard size > 0 else {
+            return []
+        }
+
+        var cells: Set<BoardPosition> = []
+
+        for row in 0..<size {
+            let width = max(1, Int((Double(row + 1) / Double(size) * Double(size)).rounded()))
+            let startColumn = max(0, (size - width) / 2)
+            let endColumn = min(size - 1, startColumn + width - 1)
+
+            for column in startColumn...endColumn {
+                cells.insert(BoardPosition(row: row, column: column))
             }
         }
 

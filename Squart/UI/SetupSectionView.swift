@@ -10,11 +10,11 @@ struct SetupSectionView<Content: View>: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.90))
+                    .foregroundStyle(SquartTheme.Colors.strongText)
 
                 Text(subtitle)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.48))
+                    .foregroundStyle(SquartTheme.Colors.mutedText)
             }
 
             content
@@ -22,15 +22,15 @@ struct SetupSectionView<Content: View>: View {
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color.white.opacity(0.045))
+            RoundedRectangle(cornerRadius: SquartTheme.Radius.small, style: .continuous)
+                .fill(SquartTheme.Colors.subtlePanelGraphite)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: SquartTheme.Radius.small, style: .continuous)
                 .stroke(
                     LinearGradient(
                         colors: [
-                            Color(red: 0.78, green: 0.66, blue: 0.52).opacity(0.28),
+                            SquartTheme.Colors.cappuccino.opacity(0.28),
                             Color.white.opacity(0.06)
                         ],
                         startPoint: .topLeading,
@@ -45,11 +45,11 @@ struct SetupSectionView<Content: View>: View {
 
 #Preview {
     ZStack {
-        Color.black.ignoresSafeArea()
+        SquartTheme.Colors.sheetBackground.ignoresSafeArea()
 
         SetupSectionView(title: "Match", subtitle: "Choose the opponent rhythm.") {
             Text("Preview")
-                .foregroundStyle(.white)
+                .foregroundStyle(SquartTheme.Colors.primaryText)
         }
         .padding()
     }
