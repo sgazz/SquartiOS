@@ -3,6 +3,14 @@ import SceneKit
 final class SquartSceneController {
     let scene = SCNScene()
 
+    private enum NodeName {
+        static let boardRoot = "squart.boardRoot"
+        static let ambientLight = "squart.light.ambient"
+        static let keyLight = "squart.light.key"
+        static let fillLight = "squart.light.fill"
+        static let rimLight = "squart.light.rim"
+    }
+
     private let cameraController: CameraController
     private let boardRootNode = SCNNode()
     private var lastBoard: SquartBoard?
@@ -12,14 +20,28 @@ final class SquartSceneController {
 
     init() {
         self.cameraController = CameraController(scene: scene)
+        setupScene()
+    }
+
+    // MARK: - Scene Setup
+
+    private func setupScene() {
         scene.background.contents = SquartSceneMaterials.background
-        scene.rootNode.addChildNode(boardRootNode)
         scene.fogStartDistance = 24
         scene.fogEndDistance = 42
         scene.fogDensityExponent = 0.55
         scene.fogColor = SquartSceneMaterials.background
-        addLighting()
+
+        boardRootNode.name = NodeName.boardRoot
+        if scene.rootNode.childNode(withName: NodeName.boardRoot, recursively: false) == nil {
+            scene.rootNode.addChildNode(boardRootNode)
+        }
+
+        setupLightingIfNeeded()
+        validateStaticSceneInDebug()
     }
+
+    // MARK: - Updates
 
     func update(
         board: SquartBoard,
@@ -65,10 +87,14 @@ final class SquartSceneController {
         if shouldAnimateMove {
             animateMove(at: lastMovePositions)
         }
+
+        validateStaticSceneInDebug()
     }
 
-    func orbitCamera(deltaX: Float, deltaY: Float) {
-        cameraController.orbit(deltaX: deltaX, deltaY: deltaY)
+    // MARK: - Camera Controls
+
+    func orbitCamera(deltaX: Float) {
+        cameraController.orbitHorizontally(deltaX: deltaX)
     }
 
     func zoomCamera(by scale: Float) {
@@ -78,6 +104,8 @@ final class SquartSceneController {
     func resetCamera() {
         cameraController.reset()
     }
+
+    // MARK: - Animation
 
     private func animateMove(at positions: Set<BoardPosition>) {
         for position in positions {
@@ -102,56 +130,90 @@ final class SquartSceneController {
         }
     }
 
-    private func addLighting() {
-        let ambientLight = SCNLight()
-        ambientLight.type = .ambient
-        ambientLight.intensity = 190
-        ambientLight.temperature = 4_300
+    // MARK: - Lighting
 
-        let ambientNode = SCNNode()
-        ambientNode.light = ambientLight
-        scene.rootNode.addChildNode(ambientNode)
-
-        let keyLight = SCNLight()
-        keyLight.type = .area
-        keyLight.intensity = 680
-        keyLight.temperature = 3_850
-        keyLight.areaType = .rectangle
-        keyLight.areaExtents = simd_float3(11, 8, 1)
-        keyLight.castsShadow = true
-        keyLight.shadowMode = .deferred
-        keyLight.shadowRadius = 9
-        keyLight.shadowSampleCount = 24
-        keyLight.shadowColor = PlatformColor.black.withAlphaComponent(0.28)
-
-        let keyNode = SCNNode()
-        keyNode.light = keyLight
-        keyNode.position = SCNVector3(-4.8, 8.6, 6.2)
-        keyNode.look(at: SCNVector3(0, 0, 0))
-        scene.rootNode.addChildNode(keyNode)
-
-        let fillLight = SCNLight()
-        fillLight.type = .omni
-        fillLight.intensity = 210
-        fillLight.temperature = 4_700
-
-        let fillNode = SCNNode()
-        fillNode.light = fillLight
-        fillNode.position = SCNVector3(4.5, 4.0, -4.0)
-        scene.rootNode.addChildNode(fillNode)
-
-        let rimLight = SCNLight()
-        rimLight.type = .directional
-        rimLight.intensity = 85
-        rimLight.temperature = 5_600
-
-        let rimNode = SCNNode()
-        rimNode.light = rimLight
-        rimNode.position = SCNVector3(5.5, 5.8, 7.0)
-        rimNode.look(at: SCNVector3(0, 0, 0))
-        scene.rootNode.addChildNode(rimNode)
-
+    private func setupLightingIfNeeded() {
         scene.lightingEnvironment.contents = SquartSceneMaterials.environment
-        scene.lightingEnvironment.intensity = 0.22
+        scene.lightingEnvironment.intensity = 0.24
+
+        upsertLightNode(named: NodeName.ambientLight) { node in
+            let ambientLight = node.light ?? SCNLight()
+            node.light = ambientLight
+
+            ambientLight.type = .ambient
+            ambientLight.intensity = 340
+            ambientLight.temperature = 4_350
+        }
+
+        upsertLightNode(named: NodeName.keyLight) { node in
+            let keyLight = node.light ?? SCNLight()
+            node.light = keyLight
+
+            keyLight.type = .area
+            keyLight.intensity = 95
+            keyLight.temperature = 4_200
+            keyLight.areaType = .rectangle
+            keyLight.areaExtents = simd_float3(18, 18, 1)
+            keyLight.castsShadow = true
+            keyLight.shadowMode = .deferred
+            keyLight.shadowRadius = 18
+            keyLight.shadowSampleCount = 24
+            keyLight.shadowColor = PlatformColor.black.withAlphaComponent(0.10)
+
+            node.position = SCNVector3(0, 8.5, 0)
+            node.look(at: SCNVector3(0, 0, 0))
+        }
+
+        upsertLightNode(named: NodeName.fillLight) { node in
+            let fillLight = node.light ?? SCNLight()
+            node.light = fillLight
+
+            fillLight.type = .omni
+            fillLight.intensity = 260
+            fillLight.temperature = 4_500
+
+            node.position = SCNVector3(-4.8, 4.6, -4.8)
+        }
+
+        upsertLightNode(named: NodeName.rimLight) { node in
+            let rimLight = node.light ?? SCNLight()
+            node.light = rimLight
+
+            rimLight.type = .omni
+            rimLight.intensity = 210
+            rimLight.temperature = 4_900
+
+            node.position = SCNVector3(4.8, 4.6, 4.8)
+        }
+    }
+
+    private func upsertLightNode(named name: String, configure: (SCNNode) -> Void) {
+        let node = scene.rootNode.childNode(withName: name, recursively: false) ?? SCNNode()
+        node.name = name
+        configure(node)
+
+        if node.parent == nil {
+            scene.rootNode.addChildNode(node)
+        }
+    }
+
+    private func validateStaticSceneInDebug() {
+        #if DEBUG
+        let staticNodeNames = [
+            NodeName.ambientLight,
+            NodeName.keyLight,
+            NodeName.fillLight,
+            NodeName.rimLight,
+            NodeName.boardRoot,
+            CameraController.cameraNodeName
+        ]
+
+        for name in staticNodeNames {
+            let count = scene.rootNode.childNodes.filter { $0.name == name }.count
+            assert(count == 1, "Expected one SceneKit node named \(name), found \(count).")
+        }
+
+        assert(boardRootNode.childNodes.count <= 1, "Board root should contain a single rebuilt board content node.")
+        #endif
     }
 }

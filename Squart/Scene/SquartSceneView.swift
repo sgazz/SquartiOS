@@ -25,7 +25,7 @@ struct SquartSceneView: UIViewRepresentable {
         sceneView.antialiasingMode = .multisampling4X
         sceneView.allowsCameraControl = false
         sceneView.autoenablesDefaultLighting = false
-        sceneView.isJitteringEnabled = true
+        sceneView.isJitteringEnabled = false
         context.coordinator.installGestures(on: sceneView)
         context.coordinator.controller.update(
             board: board,
@@ -119,10 +119,7 @@ struct SquartSceneView: UIViewRepresentable {
             }
 
             let translation = gesture.translation(in: sceneView)
-            controller.orbitCamera(
-                deltaX: Float(translation.x),
-                deltaY: Float(translation.y)
-            )
+            controller.orbitCamera(deltaX: Float(translation.x))
             gesture.setTranslation(.zero, in: sceneView)
         }
 
