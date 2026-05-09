@@ -34,7 +34,9 @@ struct GameView: View {
                     currentPlayer: game.currentPlayer,
                     isAITurnPending: isAITurnPending,
                     moveCount: moveCount,
+                    canUndo: game.canUndo,
                     boardMode: $boardMode,
+                    onUndoLastMove: undoLastMove,
                     onResetGame: resetGame,
                     onResetCamera: resetCamera,
                     onChangeSetup: changeSetup
@@ -83,6 +85,7 @@ struct GameView: View {
             if let winner = game.winner {
                 GameOverOverlay(
                     winner: winner,
+                    onUndo: game.canUndo ? { undoLastMove() } : nil,
                     onRematch: rematch,
                     onChangeSetup: changeSetup
                 )
@@ -154,6 +157,37 @@ struct GameView: View {
     private func resetGame() {
         Haptics.softImpact()
         resetMatchState()
+    }
+
+    private func undoLastMove() {
+        guard game.canUndo else {
+            return
+        }
+
+        let wasAITurnPending = isAITurnPending
+
+        aiTurnToken += 1
+        isAITurnPending = false
+        isPlacementInputLocked = false
+
+        let undoLimit = configuration.mode == .playerVsAI ? 2 : 1
+        let targetUndoCount = wasAITurnPending ? 1 : undoLimit
+        var undoneCount = 0
+
+        for _ in 0..<targetUndoCount where game.undoLastMove() {
+            undoneCount += 1
+        }
+
+        guard undoneCount > 0 else {
+            return
+        }
+
+        moveCount = max(0, moveCount - undoneCount)
+        previewPosition = nil
+        lastMovePositions = []
+        moveAnimationToken += 1
+        didTriggerGameOverHaptic = false
+        Haptics.lightImpact()
     }
 
     private func rematch() {

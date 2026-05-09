@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GameOverOverlay: View {
     let winner: Player
+    let onUndo: (() -> Void)?
     let onRematch: () -> Void
     let onChangeSetup: () -> Void
 
@@ -26,24 +27,33 @@ struct GameOverOverlay: View {
                         .multilineTextAlignment(.center)
                 }
 
-                HStack(spacing: 12) {
-                    Button(action: onChangeSetup) {
-                        OverlaySecondaryButtonLabel(title: "Change Setup", width: 150)
+                VStack(spacing: 10) {
+                    if let onUndo {
+                        Button(action: onUndo) {
+                            OverlaySecondaryButtonLabel(title: "Undo", width: 286)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
 
-                    Button(action: onRematch) {
-                        Text("Rematch")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundStyle(Color(red: 0.16, green: 0.12, blue: 0.09))
-                            .frame(width: 132, height: 48)
-                            .background(
-                                Capsule()
-                                    .fill(Color(red: 0.78, green: 0.66, blue: 0.52))
-                                    .shadow(color: Color(red: 0.78, green: 0.66, blue: 0.52).opacity(0.16), radius: 16)
-                            )
+                    HStack(spacing: 12) {
+                        Button(action: onRematch) {
+                            Text("Rematch")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(Color(red: 0.16, green: 0.12, blue: 0.09))
+                                .frame(width: 132, height: 48)
+                                .background(
+                                    Capsule()
+                                        .fill(Color(red: 0.78, green: 0.66, blue: 0.52))
+                                        .shadow(color: Color(red: 0.78, green: 0.66, blue: 0.52).opacity(0.16), radius: 16)
+                                )
+                        }
+                        .buttonStyle(.plain)
+
+                        Button(action: onChangeSetup) {
+                            OverlaySecondaryButtonLabel(title: "Change Setup", width: 142)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
             }
             .padding(28)
@@ -94,6 +104,7 @@ private struct OverlaySecondaryButtonLabel: View {
 #Preview {
     GameOverOverlay(
         winner: .horizontal,
+        onUndo: {},
         onRematch: {},
         onChangeSetup: {}
     )
