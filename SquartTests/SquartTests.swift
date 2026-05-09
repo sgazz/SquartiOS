@@ -65,6 +65,61 @@ final class SquartTests: XCTestCase {
         XCTAssertEqual(game.winner, .horizontal)
     }
 
+    func testUndoLastMoveRestoresBoardAndCurrentPlayer() {
+        var game = SquartGame(board: SquartBoard(rows: 3, columns: 3), startingPlayer: .horizontal)
+        let move = Move(player: .horizontal, origin: BoardPosition(row: 0, column: 0))
+
+        XCTAssertTrue(game.play(move))
+        XCTAssertTrue(game.canUndo)
+        XCTAssertEqual(game.cellState(at: BoardPosition(row: 0, column: 0)), .occupied(.horizontal))
+
+        XCTAssertTrue(game.undoLastMove())
+        XCTAssertFalse(game.canUndo)
+        XCTAssertEqual(game.currentPlayer, .horizontal)
+        XCTAssertNil(game.winner)
+        XCTAssertEqual(game.cellState(at: BoardPosition(row: 0, column: 0)), .empty)
+        XCTAssertEqual(game.cellState(at: BoardPosition(row: 0, column: 1)), .empty)
+    }
+
+    func testUndoLastMoveRestoresWinnerState() {
+        var game = SquartGame(board: SquartBoard(rows: 2, columns: 2), startingPlayer: .horizontal)
+        let winningMove = Move(player: .horizontal, origin: BoardPosition(row: 0, column: 0))
+
+        XCTAssertTrue(game.play(winningMove))
+        XCTAssertEqual(game.winner, .horizontal)
+
+        XCTAssertTrue(game.undoLastMove())
+        XCTAssertNil(game.winner)
+        XCTAssertEqual(game.currentPlayer, .horizontal)
+        XCTAssertFalse(game.isFinished)
+    }
+
+    func testUndoLastMoveReturnsFalseWhenHistoryIsEmpty() {
+        var game = SquartGame(board: SquartBoard(rows: 3, columns: 3), startingPlayer: .horizontal)
+
+        XCTAssertFalse(game.canUndo)
+        XCTAssertFalse(game.undoLastMove())
+    }
+
+    func testUndoCanRevertTwoMovePair() {
+        var game = SquartGame(board: SquartBoard(rows: 4, columns: 4), startingPlayer: .horizontal)
+        let humanMove = Move(player: .horizontal, origin: BoardPosition(row: 0, column: 0))
+        let aiMove = Move(player: .vertical, origin: BoardPosition(row: 1, column: 2))
+
+        XCTAssertTrue(game.play(humanMove))
+        XCTAssertTrue(game.play(aiMove))
+        XCTAssertEqual(game.currentPlayer, .horizontal)
+
+        XCTAssertTrue(game.undoLastMove())
+        XCTAssertEqual(game.currentPlayer, .vertical)
+        XCTAssertEqual(game.cellState(at: BoardPosition(row: 1, column: 2)), .empty)
+
+        XCTAssertTrue(game.undoLastMove())
+        XCTAssertEqual(game.currentPlayer, .horizontal)
+        XCTAssertEqual(game.cellState(at: BoardPosition(row: 0, column: 0)), .empty)
+        XCTAssertFalse(game.canUndo)
+    }
+
     func testDiamondUsesOutsideCellsAndInternalBlockers() throws {
         let board = try XCTUnwrap(
             BoardGenerator.board(for: .diamond(size: 5), inactiveCellRatio: 0.25)
@@ -83,5 +138,11 @@ final class SquartTests: XCTestCase {
             .count,
             0
         )
+    }
+}
+
+private extension SquartGame {
+    func cellState(at position: BoardPosition) -> CellState? {
+        board.cellState(at: position)
     }
 }

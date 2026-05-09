@@ -48,118 +48,152 @@ struct SetupView: View {
     let onBack: () -> Void
 
     var body: some View {
-        VStack(spacing: 28) {
-            VStack(spacing: 8) {
-                Text("Match Setup")
-                    .font(.system(size: 34, weight: .semibold, design: .serif))
-                    .foregroundStyle(.white.opacity(0.94))
+        ScrollView {
+            VStack(spacing: 22) {
+                header
 
-                Text("Choose the shape of the contest.")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.58))
-            }
+                VStack(spacing: 14) {
+                    SetupSectionView(title: "Match", subtitle: "Choose the opponent rhythm.") {
+                        VStack(spacing: 14) {
+                            setupPicker("Game Mode") {
+                                Picker("Game Mode", selection: $selectedGameMode) {
+                                    ForEach(GameMode.allCases) { mode in
+                                        Text(mode.rawValue).tag(mode)
+                                    }
+                                }
+                                .pickerStyle(.segmented)
+                            }
 
-            VStack(spacing: 18) {
-                Picker("Game Mode", selection: $selectedGameMode) {
-                    ForEach(GameMode.allCases) { mode in
-                        Text(mode.rawValue).tag(mode)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(maxWidth: 320)
-
-                if selectedGameMode == .playerVsAI {
-                    Picker("AI Difficulty", selection: $selectedAIDifficulty) {
-                        ForEach(AIDifficulty.allCases) { difficulty in
-                            Text(difficulty.rawValue).tag(difficulty)
+                            if selectedGameMode == .playerVsAI {
+                                setupPicker("AI Difficulty") {
+                                    Picker("AI Difficulty", selection: $selectedAIDifficulty) {
+                                        ForEach(AIDifficulty.allCases) { difficulty in
+                                            Text(difficulty.rawValue).tag(difficulty)
+                                        }
+                                    }
+                                    .pickerStyle(.segmented)
+                                }
+                                .transition(.opacity)
+                            }
                         }
                     }
-                    .pickerStyle(.segmented)
-                    .frame(maxWidth: 220)
-                    .transition(.opacity)
-                }
 
-                VStack(spacing: 12) {
-                    Picker("Board Shape", selection: $selectedBoardShape) {
-                        ForEach(BoardShapeOption.allCases) { option in
-                            Text(option.rawValue).tag(option)
+                    SetupSectionView(title: "Board", subtitle: "Tune the field before the first move.") {
+                        VStack(spacing: 14) {
+                            setupPicker("Shape") {
+                                Picker("Board Shape", selection: $selectedBoardShape) {
+                                    ForEach(BoardShapeOption.allCases) { option in
+                                        Text(option.rawValue).tag(option)
+                                    }
+                                }
+                                .pickerStyle(.segmented)
+                            }
+
+                            setupPicker("Size") {
+                                Picker("Board Size", selection: $selectedBoardSize) {
+                                    ForEach(BoardSizeOption.allCases) { option in
+                                        Text(option.title).tag(option)
+                                    }
+                                }
+                                .pickerStyle(.segmented)
+                            }
+
+                            setupPicker("Inactive") {
+                                Picker("Inactive Cells", selection: $selectedInactiveRatio) {
+                                    ForEach(InactiveRatioOption.allCases) { option in
+                                        Text(option.title).tag(option)
+                                    }
+                                }
+                                .pickerStyle(.segmented)
+                            }
                         }
                     }
-                    .pickerStyle(.segmented)
-                    .frame(maxWidth: 240)
-
-                    Picker("Board Size", selection: $selectedBoardSize) {
-                        ForEach(BoardSizeOption.allCases) { option in
-                            Text(option.title).tag(option)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(maxWidth: 340)
-
-                    Picker("Inactive Cells", selection: $selectedInactiveRatio) {
-                        ForEach(InactiveRatioOption.allCases) { option in
-                            Text(option.title).tag(option)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(maxWidth: 300)
                 }
-            }
-            .tint(Color(red: 0.78, green: 0.66, blue: 0.52))
-
-            Button {
-                Haptics.selection()
-                isShowingRules = true
-            } label: {
-                Text("How to Play")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Color(red: 0.78, green: 0.66, blue: 0.52))
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 10)
-                    .background(
-                        Capsule()
-                            .stroke(Color(red: 0.78, green: 0.66, blue: 0.52).opacity(0.32), lineWidth: 1)
-                            .background(Capsule().fill(Color.white.opacity(0.035)))
-                    )
-            }
-            .buttonStyle(.plain)
-
-            HStack(spacing: 12) {
-                Button(action: onBack) {
-                    SetupSecondaryButtonLabel(title: "Back", width: 112)
-                }
-                .buttonStyle(.plain)
+                .tint(Color(red: 0.78, green: 0.66, blue: 0.52))
 
                 Button {
-                    Haptics.softImpact()
-                    onStartMatch(
-                        GameConfiguration(
-                            mode: selectedGameMode,
-                            aiDifficulty: selectedAIDifficulty,
-                            boardShape: selectedBoardShape.boardShape(size: selectedBoardSize.rawValue),
-                            boardSize: selectedBoardSize.rawValue,
-                            inactiveCellRatio: selectedInactiveRatio.rawValue
-                        )
-                    )
+                    Haptics.selection()
+                    isShowingRules = true
                 } label: {
-                    Text("Start Match")
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(Color(red: 0.16, green: 0.12, blue: 0.09))
-                        .frame(width: 178, height: 52)
+                    Label("How to Play", systemImage: "questionmark.circle")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(Color(red: 0.78, green: 0.66, blue: 0.52))
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 10)
                         .background(
                             Capsule()
-                                .fill(Color(red: 0.78, green: 0.66, blue: 0.52))
-                                .shadow(color: Color(red: 0.78, green: 0.66, blue: 0.52).opacity(0.18), radius: 18)
+                                .stroke(Color(red: 0.78, green: 0.66, blue: 0.52).opacity(0.32), lineWidth: 1)
+                                .background(Capsule().fill(Color.white.opacity(0.035)))
                         )
                 }
                 .buttonStyle(.plain)
+
+                HStack(spacing: 12) {
+                    Button(action: onBack) {
+                        SetupSecondaryButtonLabel(title: "Back", width: 112)
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        Haptics.softImpact()
+                        onStartMatch(
+                            GameConfiguration(
+                                mode: selectedGameMode,
+                                aiDifficulty: selectedAIDifficulty,
+                                boardShape: selectedBoardShape.boardShape(size: selectedBoardSize.rawValue),
+                                boardSize: selectedBoardSize.rawValue,
+                                inactiveCellRatio: selectedInactiveRatio.rawValue
+                            )
+                        )
+                    } label: {
+                        Text("Start Match")
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundStyle(Color(red: 0.16, green: 0.12, blue: 0.09))
+                            .frame(width: 178, height: 52)
+                            .background(
+                                Capsule()
+                                    .fill(Color(red: 0.78, green: 0.66, blue: 0.52))
+                                    .shadow(color: Color(red: 0.78, green: 0.66, blue: 0.52).opacity(0.18), radius: 18)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
             }
+            .frame(maxWidth: 460)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 30)
         }
-        .padding(32)
+        .scrollIndicators(.hidden)
         .sheet(isPresented: $isShowingRules) {
             RulesView()
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
+        }
+    }
+
+    private var header: some View {
+        VStack(spacing: 8) {
+            Text("Match Setup")
+                .font(.system(size: 34, weight: .semibold, design: .serif))
+                .foregroundStyle(.white.opacity(0.94))
+
+            Text("Shape the board before the first denial.")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(.white.opacity(0.58))
+                .multilineTextAlignment(.center)
+        }
+    }
+
+    private func setupPicker<Content: View>(
+        _ title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title.uppercased())
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Color(red: 0.78, green: 0.66, blue: 0.52).opacity(0.86))
+
+            content()
         }
     }
 }

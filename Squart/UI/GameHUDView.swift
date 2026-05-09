@@ -5,9 +5,11 @@ struct GameHUDView: View {
     let currentPlayer: Player
     let isAITurnPending: Bool
     let moveCount: Int
+    let canUndo: Bool
 
     @Binding var boardMode: GameBoardMode
 
+    let onUndoLastMove: () -> Void
     let onResetGame: () -> Void
     let onResetCamera: () -> Void
     let onChangeSetup: () -> Void
@@ -47,6 +49,12 @@ struct GameHUDView: View {
             .tint(Color(red: 0.78, green: 0.66, blue: 0.52))
 
             HStack(spacing: 10) {
+                Button(action: onUndoLastMove) {
+                    HUDButtonLabel(title: "Undo", isEnabled: canUndo)
+                }
+                .buttonStyle(.plain)
+                .disabled(!canUndo)
+
                 Button(action: onResetGame) {
                     HUDButtonLabel(title: "Reset Game")
                 }
@@ -94,11 +102,12 @@ struct GameHUDView: View {
 
 private struct HUDButtonLabel: View {
     let title: String
+    var isEnabled = true
 
     var body: some View {
         Text(title)
             .font(.system(size: 13, weight: .medium))
-            .foregroundStyle(.white.opacity(0.86))
+            .foregroundStyle(.white.opacity(isEnabled ? 0.86 : 0.34))
             .lineLimit(1)
             .minimumScaleFactor(0.78)
             .frame(maxWidth: .infinity)
@@ -106,7 +115,7 @@ private struct HUDButtonLabel: View {
             .background(
                 Capsule()
                     .stroke(Color.white.opacity(0.14), lineWidth: 1)
-                    .background(Capsule().fill(Color.white.opacity(0.045)))
+                    .background(Capsule().fill(Color.white.opacity(isEnabled ? 0.045 : 0.025)))
             )
     }
 }

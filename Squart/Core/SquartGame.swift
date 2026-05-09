@@ -2,6 +2,7 @@ nonisolated struct SquartGame: Equatable, Sendable {
     private(set) var board: SquartBoard
     private(set) var currentPlayer: Player
     private(set) var winner: Player?
+    private var history: [GameSnapshot] = []
 
     init(board: SquartBoard, startingPlayer: Player = .horizontal) {
         self.board = board
@@ -16,10 +17,22 @@ nonisolated struct SquartGame: Equatable, Sendable {
         board.validMoves(for: currentPlayer)
     }
 
+    var canUndo: Bool {
+        !history.isEmpty
+    }
+
     mutating func play(_ move: Move) -> Bool {
-        guard winner == nil, move.player == currentPlayer, board.apply(move) else {
+        guard winner == nil, move.player == currentPlayer else {
             return false
         }
+
+        let previousState = snapshot
+
+        guard board.apply(move) else {
+            return false
+        }
+
+        history.append(previousState)
 
         let nextPlayer = currentPlayer.opponent
 
@@ -30,5 +43,21 @@ nonisolated struct SquartGame: Equatable, Sendable {
         }
 
         return true
+    }
+
+    @discardableResult
+    mutating func undoLastMove() -> Bool {
+        guard let previousState = history.popLast() else {
+            return false
+        }
+
+        board = previousState.board
+        currentPlayer = previousState.currentPlayer
+        winner = previousState.winner
+        return true
+    }
+
+    private var snapshot: GameSnapshot {
+        GameSnapshot(board: board, currentPlayer: currentPlayer, winner: winner)
     }
 }
