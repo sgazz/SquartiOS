@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var settings: AppSettings
+    @State private var isShowingSupportDevelopment = false
 
     private let store: AppSettingsStore
 
@@ -31,11 +32,25 @@ struct SettingsView: View {
                         subtitle: "Prepared for future move and match sounds.",
                         isOn: soundEffectsBinding
                     )
+
+                    Button {
+                        isShowingSupportDevelopment = true
+                    } label: {
+                        settingsRow(
+                            title: "Support Development",
+                            subtitle: "Optional one-time support for Squart."
+                        )
+                    }
+                    .buttonStyle(.plain)
                 }
 
                 Spacer(minLength: 0)
             }
             .padding(28)
+        }
+        .sheet(isPresented: $isShowingSupportDevelopment) {
+            SupportDevelopmentView()
+                .presentationDetents([.height(430), .medium])
         }
     }
 
@@ -99,6 +114,29 @@ struct SettingsView: View {
             }
         }
         .tint(SquartTheme.Colors.cappuccino)
+        .padding(18)
+        .squartCard()
+    }
+
+    private func settingsRow(title: String, subtitle: String) -> some View {
+        HStack(spacing: 14) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(SquartTheme.Colors.strongText)
+
+                Text(subtitle)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(SquartTheme.Colors.mutedText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(SquartTheme.Colors.cappuccino)
+        }
         .padding(18)
         .squartCard()
     }

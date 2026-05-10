@@ -39,6 +39,13 @@ enum BoardNodeFactory {
             }
         }
 
+        addDominoNodes(
+            to: rootNode,
+            from: board,
+            spacing: spacing,
+            xOffset: xOffset,
+            zOffset: zOffset
+        )
         rootNode.addChildNode(makeBaseNode(rows: board.rows, columns: board.columns))
         return rootNode
     }
@@ -55,6 +62,22 @@ enum BoardNodeFactory {
         }
 
         return nil
+    }
+
+    static func dominoNodes(in rootNode: SCNNode, matching positions: Set<BoardPosition>) -> [SCNNode] {
+        var matchingNodes: [SCNNode] = []
+
+        rootNode.enumerateChildNodes { node, _ in
+            guard node.name?.hasPrefix("\(dominoNodeName)_") == true else {
+                return
+            }
+
+            if dominoPositions(from: node.name) == positions {
+                matchingNodes.append(node)
+            }
+        }
+
+        return matchingNodes
     }
 
     // MARK: - Tile Nodes
@@ -88,10 +111,6 @@ enum BoardNodeFactory {
         let node = SCNNode(geometry: tileGeometry(for: state))
         node.name = name(for: position)
         node.castsShadow = true
-
-        if case .occupied(let player) = state {
-            node.addChildNode(makeDominoNode(for: player))
-        }
 
         if state == .inactive {
             node.addChildNode(makeBlockerCap())
@@ -135,10 +154,69 @@ enum BoardNodeFactory {
 
     // MARK: - Pieces
 
-    private static func makeDominoNode(for player: Player) -> SCNNode {
+    private static func addDominoNodes(
+        to rootNode: SCNNode,
+        from board: SquartBoard,
+        spacing: CGFloat,
+        xOffset: CGFloat,
+        zOffset: CGFloat
+    ) {
+        var consumedPositions: Set<BoardPosition> = []
+
+        for row in 0..<board.rows {
+            for column in 0..<board.columns {
+                let position = BoardPosition(row: row, column: column)
+
+                guard !consumedPositions.contains(position) else {
+                    continue
+                }
+
+                if isDominoOrigin(at: position, for: .horizontal, on: board, consumedPositions: consumedPositions) {
+                    let nextPosition = position.offsetBy(rows: 0, columns: 1)
+                    let node = makeDominoNode(for: .horizontal, positions: [position, nextPosition])
+                    node.position = centerPosition(
+                        between: position,
+                        and: nextPosition,
+                        spacing: spacing,
+                        xOffset: xOffset,
+                        zOffset: zOffset
+                    )
+                    rootNode.addChildNode(node)
+                    consumedPositions.insert(position)
+                    consumedPositions.insert(nextPosition)
+                }
+            }
+        }
+
+        for column in 0..<board.columns {
+            for row in 0..<board.rows {
+                let position = BoardPosition(row: row, column: column)
+
+                guard !consumedPositions.contains(position) else {
+                    continue
+                }
+
+                if isDominoOrigin(at: position, for: .vertical, on: board, consumedPositions: consumedPositions) {
+                    let nextPosition = position.offsetBy(rows: 1, columns: 0)
+                    let node = makeDominoNode(for: .vertical, positions: [position, nextPosition])
+                    node.position = centerPosition(
+                        between: position,
+                        and: nextPosition,
+                        spacing: spacing,
+                        xOffset: xOffset,
+                        zOffset: zOffset
+                    )
+                    rootNode.addChildNode(node)
+                    consumedPositions.insert(position)
+                    consumedPositions.insert(nextPosition)
+                }
+            }
+        }
+    }
+
+    private static func makeDominoNode(for player: Player, positions: [BoardPosition]) -> SCNNode {
         let node = SCNNode(geometry: player == .horizontal ? BoardGeometry.horizontalDomino : BoardGeometry.verticalDomino)
-        node.name = dominoNodeName
-        node.position = SCNVector3(0, 0.15, 0)
+        node.name = dominoName(for: positions)
         node.castsShadow = true
         node.addChildNode(makeDominoTopLine(for: player))
         return node
@@ -148,6 +226,41 @@ enum BoardNodeFactory {
         let node = SCNNode(geometry: player == .horizontal ? BoardGeometry.horizontalDominoTopLine : BoardGeometry.verticalDominoTopLine)
         node.position = SCNVector3(0, 0.098, 0)
         return node
+    }
+
+    private static func isDominoOrigin(
+        at position: BoardPosition,
+        for player: Player,
+        on board: SquartBoard,
+        consumedPositions: Set<BoardPosition>
+    ) -> Bool {
+        guard board.cellState(at: position) == .occupied(player) else {
+            return false
+        }
+
+        let delta = player.moveDelta
+        let nextPosition = position.offsetBy(rows: delta.rows, columns: delta.columns)
+        return !consumedPositions.contains(nextPosition) &&
+            board.cellState(at: nextPosition) == .occupied(player)
+    }
+
+    private static func centerPosition(
+        between firstPosition: BoardPosition,
+        and secondPosition: BoardPosition,
+        spacing: CGFloat,
+        xOffset: CGFloat,
+        zOffset: CGFloat
+    ) -> SCNVector3 {
+        let firstX = CGFloat(firstPosition.column) * spacing - xOffset
+        let firstZ = CGFloat(firstPosition.row) * spacing - zOffset
+        let secondX = CGFloat(secondPosition.column) * spacing - xOffset
+        let secondZ = CGFloat(secondPosition.row) * spacing - zOffset
+
+        return SCNVector3(
+            (firstX + secondX) / 2,
+            0.17,
+            (firstZ + secondZ) / 2
+        )
     }
 
     private static func makeBlockerCap() -> SCNNode {
@@ -232,6 +345,37 @@ enum BoardNodeFactory {
 
     private static func name(for position: BoardPosition) -> String {
         "\(tileNamePrefix)_\(position.row)_\(position.column)"
+    }
+
+    private static func dominoName(for positions: [BoardPosition]) -> String {
+        let suffix = positions
+            .map { "\($0.row)_\($0.column)" }
+            .joined(separator: "_")
+        return "\(dominoNodeName)_\(suffix)"
+    }
+
+    private static func dominoPositions(from nodeName: String?) -> Set<BoardPosition>? {
+        guard let nodeName else {
+            return nil
+        }
+
+        let parts = nodeName.split(separator: "_")
+
+        guard
+            parts.count == 5,
+            parts[0] == dominoNodeName,
+            let firstRow = Int(parts[1]),
+            let firstColumn = Int(parts[2]),
+            let secondRow = Int(parts[3]),
+            let secondColumn = Int(parts[4])
+        else {
+            return nil
+        }
+
+        return [
+            BoardPosition(row: firstRow, column: firstColumn),
+            BoardPosition(row: secondRow, column: secondColumn)
+        ]
     }
 }
 
@@ -322,33 +466,33 @@ private enum BoardGeometry {
     static let aiPreviewVerticalRail = previewVerticalRail(material: SquartSceneMaterials.aiPreviewEdge)
 
     static let horizontalDomino = box(
-        width: 0.76,
-        height: 0.18,
-        length: 0.32,
-        chamferRadius: 0.07,
+        width: 1.68,
+        height: 0.20,
+        length: 0.80,
+        chamferRadius: 0.08,
         material: SquartSceneMaterials.horizontalPiece
     )
 
     static let verticalDomino = box(
-        width: 0.32,
-        height: 0.18,
-        length: 0.76,
-        chamferRadius: 0.07,
+        width: 0.80,
+        height: 0.20,
+        length: 1.68,
+        chamferRadius: 0.08,
         material: SquartSceneMaterials.verticalPiece
     )
 
     static let horizontalDominoTopLine = box(
-        width: 0.46,
+        width: 1.12,
         height: 0.012,
-        length: 0.045,
+        length: 0.050,
         chamferRadius: 0.008,
         material: SquartSceneMaterials.horizontalPieceAccent
     )
 
     static let verticalDominoTopLine = box(
-        width: 0.045,
+        width: 0.050,
         height: 0.012,
-        length: 0.46,
+        length: 1.12,
         chamferRadius: 0.008,
         material: SquartSceneMaterials.verticalPieceAccent
     )

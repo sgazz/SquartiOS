@@ -108,25 +108,17 @@ final class SquartSceneController {
     // MARK: - Animation
 
     private func animateMove(at positions: Set<BoardPosition>) {
-        for position in positions {
-            guard let tileNode = BoardNodeFactory.tileNode(in: boardRootNode, at: position) else {
-                continue
-            }
+        for dominoNode in BoardNodeFactory.dominoNodes(in: boardRootNode, matching: positions) {
+            let finalPosition = dominoNode.position
+            dominoNode.position = SCNVector3(finalPosition.x, finalPosition.y + 0.18, finalPosition.z)
+            dominoNode.scale = SCNVector3(0.96, 0.84, 0.96)
 
-            let dominoNodes = tileNode.childNodes.filter { $0.name == BoardNodeFactory.dominoNodeName }
-
-            for dominoNode in dominoNodes {
-                let finalPosition = dominoNode.position
-                dominoNode.position = SCNVector3(finalPosition.x, finalPosition.y + 0.18, finalPosition.z)
-                dominoNode.scale = SCNVector3(0.94, 0.82, 0.94)
-
-                let settle = SCNAction.group([
-                    .move(to: finalPosition, duration: 0.24),
-                    .scale(to: 1.0, duration: 0.24)
-                ])
-                settle.timingMode = .easeOut
-                dominoNode.runAction(settle)
-            }
+            let settle = SCNAction.group([
+                .move(to: finalPosition, duration: 0.24),
+                .scale(to: 1.0, duration: 0.24)
+            ])
+            settle.timingMode = .easeOut
+            dominoNode.runAction(settle)
         }
     }
 
