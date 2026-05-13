@@ -35,6 +35,7 @@ struct SettingsView: View {
                             isShowingThemes = true
                         } label: {
                             settingsRow(
+                                icon: "paintpalette",
                                 title: "Themes",
                                 subtitle: "Choose Squart's visual mood."
                             )
@@ -45,6 +46,7 @@ struct SettingsView: View {
                             isShowingAppIcons = true
                         } label: {
                             settingsRow(
+                                icon: "app.badge",
                                 title: "App Icons",
                                 subtitle: "Match the Home Screen icon to your theme."
                             )
@@ -55,6 +57,7 @@ struct SettingsView: View {
                             isShowingSupportDevelopment = true
                         } label: {
                             settingsRow(
+                                icon: "heart",
                                 title: "Support Development",
                                 subtitle: "Optional one-time support for Squart."
                             )
@@ -139,8 +142,13 @@ struct SettingsView: View {
         .animation(SquartTheme.microInteractionAnimation, value: isOn.wrappedValue)
     }
 
-    private func settingsRow(title: String, subtitle: String) -> some View {
+    private func settingsRow(icon: String, title: String, subtitle: String) -> some View {
         HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(palette.accent)
+                .frame(width: 26, height: 26)
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 17, weight: .semibold))

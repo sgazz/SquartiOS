@@ -121,6 +121,22 @@ final class SquartTests: XCTestCase {
         XCTAssertFalse(game.canUndo)
     }
 
+    func testPlacedMovesTrackAppliedMovesAndUndo() {
+        var game = SquartGame(board: SquartBoard(rows: 4, columns: 4), startingPlayer: .horizontal)
+        let firstMove = Move(player: .horizontal, origin: BoardPosition(row: 0, column: 0))
+        let secondMove = Move(player: .vertical, origin: BoardPosition(row: 0, column: 2))
+
+        XCTAssertTrue(game.play(firstMove))
+        XCTAssertTrue(game.play(secondMove))
+        XCTAssertEqual(game.placedMoves, [firstMove, secondMove])
+
+        XCTAssertTrue(game.undoLastMove())
+        XCTAssertEqual(game.placedMoves, [firstMove])
+
+        XCTAssertTrue(game.undoLastMove())
+        XCTAssertTrue(game.placedMoves.isEmpty)
+    }
+
     func testHardAIChoosesLegalImmediateWinningMove() throws {
         let board = SquartBoard(rows: 2, columns: 2)
         let ai = SquartAI()

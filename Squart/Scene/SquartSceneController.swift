@@ -13,6 +13,7 @@ final class SquartSceneController {
 
     private let cameraController: CameraController
     private let boardRootNode = SCNNode()
+    private var boardRotationAngle: Float = 0
     private var lastBoard: SquartBoard?
     private var lastPreviewPositions: Set<BoardPosition> = []
     private var lastAIPreviewPositions: Set<BoardPosition> = []
@@ -32,6 +33,7 @@ final class SquartSceneController {
         if scene.rootNode.childNode(withName: NodeName.boardRoot, recursively: false) == nil {
             scene.rootNode.addChildNode(boardRootNode)
         }
+        applyBoardRotation(animated: false)
 
         applySceneStyle()
         validateStaticSceneIntegrity()
@@ -55,11 +57,16 @@ final class SquartSceneController {
             applySceneStyle(animated: true)
         }
 
-        let didUpdateCamera = cameraController.configureForBoard(
-            rows: board.rows,
-            columns: board.columns,
-            viewportSize: viewportSize
-        )
+        let didUpdateCamera: Bool
+        if viewportSize.width > 0, viewportSize.height > 0 {
+            didUpdateCamera = cameraController.configureForBoard(
+                rows: board.rows,
+                columns: board.columns,
+                viewportSize: viewportSize
+            )
+        } else {
+            didUpdateCamera = false
+        }
         let needsBoardRefresh =
             board != lastBoard ||
             previewPositions != lastPreviewPositions ||
@@ -88,6 +95,7 @@ final class SquartSceneController {
                 materials: materials
             )
         )
+        applyBoardRotation(animated: false)
 
         if shouldAnimateMove {
             animateMove(at: lastMovePositions)
@@ -99,7 +107,9 @@ final class SquartSceneController {
     // MARK: - Camera Controls
 
     func orbitCamera(deltaX: Float) {
-        cameraController.orbitHorizontally(deltaX: deltaX)
+        boardRotationAngle -= deltaX * 0.0032
+        boardRotationAngle.formTruncatingRemainder(dividingBy: Float.pi * 2)
+        applyBoardRotation(animated: false)
     }
 
     func zoomCamera(by scale: Float) {
@@ -108,14 +118,16 @@ final class SquartSceneController {
 
     func resetCamera() {
         cameraController.reset()
+        boardRotationAngle = 0
+        applyBoardRotation(animated: true)
     }
 
     func rotateCameraLeft90() {
-        cameraController.rotateByQuarterTurns(-1)
+        rotateBoardByQuarterTurns(1)
     }
 
     func rotateCameraRight90() {
-        cameraController.rotateByQuarterTurns(1)
+        rotateBoardByQuarterTurns(-1)
     }
 
     // MARK: - Animation
@@ -133,6 +145,35 @@ final class SquartSceneController {
             settle.timingMode = .easeOut
             dominoNode.runAction(settle)
         }
+    }
+
+    private func rotateBoardByQuarterTurns(_ quarterTurns: Int) {
+        guard quarterTurns != 0 else {
+            return
+        }
+
+        let step = Float.pi / 2
+        let snapped = (boardRotationAngle / step).rounded() * step
+        boardRotationAngle = snapped + step * Float(quarterTurns)
+        boardRotationAngle.formTruncatingRemainder(dividingBy: Float.pi * 2)
+        applyBoardRotation(animated: true)
+    }
+
+    private func applyBoardRotation(animated: Bool) {
+        let apply = {
+            self.boardRootNode.eulerAngles = SCNVector3(0, self.boardRotationAngle, 0)
+        }
+
+        guard animated else {
+            apply()
+            return
+        }
+
+        SCNTransaction.begin()
+        SCNTransaction.animationDuration = 0.24
+        SCNTransaction.animationTimingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        apply()
+        SCNTransaction.commit()
     }
 
     // MARK: - Lighting

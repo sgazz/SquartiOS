@@ -2,18 +2,20 @@ import SceneKit
 
 final class CameraController {
     static let cameraNodeName = "squart.camera"
+    // Squart SceneKit convention:
+    // - board plane is X/Z
+    // - +Y is vertical/up
+    // Camera stays fixed in top-down view; board rotation is handled by SquartSceneController.
 
     private enum Defaults {
-        static let radius: Float = 14.8
-        static let azimuth: Float = 0.0
-        static let elevation: Float = 1.47
+        static let height: Float = 14.8
+        static let topDownPitch = -Float.pi / 2
 
         static let minOrthographicScale: Double = 4.2
         static let maxOrthographicScale: Double = 26.0
     }
 
     private let cameraNode = SCNNode()
-    private var azimuth = Defaults.azimuth
     private var defaultOrthographicScale = 10.2
     private var orthographicScale = 10.2
     private var boardSize: (rows: Int, columns: Int)?
@@ -40,6 +42,10 @@ final class CameraController {
 
     @discardableResult
     func configureForBoard(rows: Int, columns: Int, viewportSize: CGSize) -> Bool {
+        guard viewportSize.width > 0, viewportSize.height > 0 else {
+            return false
+        }
+
         let nextViewportAspect = Self.viewportAspect(for: viewportSize)
 
         guard
@@ -63,23 +69,6 @@ final class CameraController {
         return true
     }
 
-    func orbitHorizontally(deltaX: Float) {
-        azimuth -= deltaX * 0.0018
-        azimuth.formTruncatingRemainder(dividingBy: Float.pi * 2)
-        applyCameraPosition()
-    }
-
-    func rotateByQuarterTurns(_ quarterTurns: Int) {
-        guard quarterTurns != 0 else {
-            return
-        }
-
-        let step = Float.pi / 2
-        azimuth += step * Float(quarterTurns)
-        azimuth.formTruncatingRemainder(dividingBy: Float.pi * 2)
-        applyCameraPosition(animated: true)
-    }
-
     func zoom(by scale: Float) {
         guard scale > 0 else {
             return
@@ -93,21 +82,19 @@ final class CameraController {
     }
 
     func reset() {
-        azimuth = Defaults.azimuth
         orthographicScale = defaultOrthographicScale
         cameraNode.camera?.orthographicScale = orthographicScale
         applyCameraPosition(animated: true)
     }
 
     private func applyCameraPosition(animated: Bool = false) {
-        let horizontalRadius = Defaults.radius * cos(Defaults.elevation)
-        let x = horizontalRadius * sin(azimuth)
-        let y = Defaults.radius * sin(Defaults.elevation)
-        let z = horizontalRadius * cos(azimuth)
-
         let apply = {
-            self.cameraNode.position = SCNVector3(x, y, z)
-            self.cameraNode.look(at: SCNVector3(0, 0, 0))
+            // Deterministic top-down transform:
+            // - board plane: X/Z
+            // - vertical axis: +Y
+            // - camera looks straight down (-Y) with zero roll
+            self.cameraNode.position = SCNVector3(0, Defaults.height, 0)
+            self.cameraNode.eulerAngles = SCNVector3(Defaults.topDownPitch, 0, 0)
         }
 
         guard animated else {

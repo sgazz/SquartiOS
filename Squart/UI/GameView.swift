@@ -153,6 +153,7 @@ struct GameView: View {
 
             ClassicBoardView(
                 board: game.board,
+                placedMoves: game.placedMoves,
                 currentPlayer: game.currentPlayer,
                 showMoveHints: show2DMoveHints,
                 isFinished: game.isFinished
@@ -323,6 +324,7 @@ struct GameView: View {
         aiTurnToken += 1
         isAITurnPending = false
         isPlacementInputLocked = false
+        resetCameraToken += 1
         game = Self.newGame(configuration: configuration)
         lastMovePositions = []
         previewPosition = nil
