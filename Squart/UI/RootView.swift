@@ -12,6 +12,7 @@ struct RootView: View {
     @State private var todayChallenge = DailyChallengeStore.shared.today()
     @State private var isTodayChallengeCompleted = false
     @StateObject private var storeManager = StoreManager.shared
+    @StateObject private var iconManager = AppIconManager.shared
     @AppStorage(SquartThemeStore.selectedThemeIDKey) private var selectedThemeID = SquartVisualTheme.defaultTheme.id
     #if DEBUG
     @State private var screenshotConfiguration: ScreenshotConfiguration?
@@ -129,10 +130,14 @@ struct RootView: View {
             #endif
             await storeManager.refreshPurchasedProducts()
             sanitizeSelectedTheme()
+            await iconManager.enforceAccessibleIcon(access: themeAccess)
             refreshDailyChallenge()
         }
         .onChange(of: storeManager.purchasedProductIDs) { _, _ in
             sanitizeSelectedTheme()
+            Task {
+                await iconManager.enforceAccessibleIcon(access: themeAccess)
+            }
         }
         .environment(\.squartPalette, palette)
         .animation(SquartTheme.themeTransitionAnimation, value: selectedThemeID)
