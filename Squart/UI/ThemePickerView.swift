@@ -98,11 +98,13 @@ struct ThemePickerView: View {
         }
         .sheet(isPresented: $isShowingSupportDevelopment) {
             SupportDevelopmentView(storeManager: storeManager)
-                .presentationDetents([.height(430), .medium])
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $isShowingAppIcons) {
             AppIconPickerView(storeManager: storeManager, iconManager: .shared)
-                .presentationDetents([.large])
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
     }
 

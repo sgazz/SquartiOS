@@ -196,7 +196,7 @@ struct SetupView: View {
         .scrollIndicators(.hidden)
         .sheet(isPresented: $isShowingRules) {
             RulesView()
-                .presentationDetents([.medium])
+                .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
         .onAppear {

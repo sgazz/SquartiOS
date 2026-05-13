@@ -110,6 +110,14 @@ final class SquartSceneController {
         cameraController.reset()
     }
 
+    func rotateCameraLeft90() {
+        cameraController.rotateByQuarterTurns(-1)
+    }
+
+    func rotateCameraRight90() {
+        cameraController.rotateByQuarterTurns(1)
+    }
+
     // MARK: - Animation
 
     private func animateMove(at positions: Set<BoardPosition>) {

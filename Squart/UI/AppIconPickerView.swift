@@ -58,7 +58,8 @@ struct AppIconPickerView: View {
         }
         .sheet(isPresented: $isShowingSupportDevelopment) {
             SupportDevelopmentView(storeManager: storeManager)
-                .presentationDetents([.height(430), .medium])
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
     }
 

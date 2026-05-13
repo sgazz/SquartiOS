@@ -11,11 +11,15 @@ struct SquartSceneView: UIViewRepresentable {
     let lastMovePositions: Set<BoardPosition>
     let moveAnimationToken: Int
     let resetCameraToken: Int
+    let rotateLeftToken: Int
+    let rotateRightToken: Int
     let onTileTapped: (BoardPosition) -> Void
 
     func makeCoordinator() -> Coordinator {
         Coordinator(
             resetCameraToken: resetCameraToken,
+            rotateLeftToken: rotateLeftToken,
+            rotateRightToken: rotateRightToken,
             onTileTapped: onTileTapped
         )
     }
@@ -44,6 +48,8 @@ struct SquartSceneView: UIViewRepresentable {
     func updateUIView(_ sceneView: SCNView, context: Context) {
         context.coordinator.onTileTapped = onTileTapped
         context.coordinator.resetCameraIfNeeded(resetCameraToken)
+        context.coordinator.rotateLeftIfNeeded(rotateLeftToken)
+        context.coordinator.rotateRightIfNeeded(rotateRightToken)
         context.coordinator.controller.update(
             board: board,
             previewPositions: previewPositions,
@@ -63,12 +69,18 @@ struct SquartSceneView: UIViewRepresentable {
         let controller = SquartSceneController()
         var onTileTapped: (BoardPosition) -> Void
         private var lastResetCameraToken: Int
+        private var lastRotateLeftToken: Int
+        private var lastRotateRightToken: Int
 
         init(
             resetCameraToken: Int,
+            rotateLeftToken: Int,
+            rotateRightToken: Int,
             onTileTapped: @escaping (BoardPosition) -> Void
         ) {
             self.lastResetCameraToken = resetCameraToken
+            self.lastRotateLeftToken = rotateLeftToken
+            self.lastRotateRightToken = rotateRightToken
             self.onTileTapped = onTileTapped
         }
 
@@ -103,6 +115,24 @@ struct SquartSceneView: UIViewRepresentable {
 
             lastResetCameraToken = token
             controller.resetCamera()
+        }
+
+        func rotateLeftIfNeeded(_ token: Int) {
+            guard token != lastRotateLeftToken else {
+                return
+            }
+
+            lastRotateLeftToken = token
+            controller.rotateCameraLeft90()
+        }
+
+        func rotateRightIfNeeded(_ token: Int) {
+            guard token != lastRotateRightToken else {
+                return
+            }
+
+            lastRotateRightToken = token
+            controller.rotateCameraRight90()
         }
 
         @objc func handleTap(_ gesture: UITapGestureRecognizer) {

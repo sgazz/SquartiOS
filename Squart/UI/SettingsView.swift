@@ -67,15 +67,18 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $isShowingSupportDevelopment) {
             SupportDevelopmentView()
-                .presentationDetents([.height(430), .medium])
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $isShowingThemes) {
             ThemePickerView()
-                .presentationDetents([.large])
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $isShowingAppIcons) {
             AppIconPickerView()
-                .presentationDetents([.large])
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
     }
 

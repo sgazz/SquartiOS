@@ -5,6 +5,8 @@ struct GameView: View {
     @State private var boardMode: GameBoardMode = .classic
     @State private var previewPosition: BoardPosition?
     @State private var resetCameraToken = 0
+    @State private var rotateLeftToken = 0
+    @State private var rotateRightToken = 0
     @State private var isAITurnPending = false
     @State private var aiTurnToken = 0
     @State private var lastMovePositions: Set<BoardPosition> = []
@@ -16,6 +18,8 @@ struct GameView: View {
     @State private var verticalMoveCount = 0
     @State private var aiPreviewPositions: Set<BoardPosition> = []
     @State private var isDailyChallengeCompleted = false
+    @State private var show2DMoveHints = false
+    @State private var moveHintTimerToken = 0
 
     let configuration: GameConfiguration
     let dailyChallenge: DailyChallenge?
@@ -58,6 +62,8 @@ struct GameView: View {
                     onUndoLastMove: undoLastMove,
                     onResetGame: resetGame,
                     onResetCamera: resetCamera,
+                    onRotateBoardLeft: rotateBoardLeft,
+                    onRotateBoardRight: rotateBoardRight,
                     onChangeSetup: changeSetup
                 )
 
@@ -78,6 +84,10 @@ struct GameView: View {
             .padding(.bottom, 8)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: game.isFinished) { _, isFinished in
+                if isFinished {
+                    clear2DMoveHints()
+                }
+
                 guard isFinished, game.winner != nil, !didTriggerGameOverHaptic else {
                     return
                 }
@@ -86,6 +96,16 @@ struct GameView: View {
                 Haptics.softImpact()
                 SoundEffects.playGameOver()
                 recordDailyCompletionIfNeeded(winner: game.winner)
+            }
+            .onChange(of: boardMode) { _, mode in
+                if mode == .classic {
+                    restart2DMoveHintTimer()
+                } else {
+                    clear2DMoveHints()
+                }
+            }
+            .task {
+                restart2DMoveHintTimer()
             }
 
             if let winner = game.winner {
@@ -110,6 +130,7 @@ struct GameView: View {
             ClassicBoardView(
                 board: game.board,
                 currentPlayer: game.currentPlayer,
+                showMoveHints: show2DMoveHints,
                 isFinished: game.isFinished
             ) { position in
                 previewPosition = nil
@@ -125,7 +146,9 @@ struct GameView: View {
                 aiPreviewPositions: aiPreviewPositions,
                 lastMovePositions: lastMovePositions,
                 moveAnimationToken: moveAnimationToken,
-                resetCameraToken: resetCameraToken
+                resetCameraToken: resetCameraToken,
+                rotateLeftToken: rotateLeftToken,
+                rotateRightToken: rotateRightToken
             ) { position in
                 handle3DTileTap(at: position)
             }
@@ -243,6 +266,7 @@ struct GameView: View {
         moveAnimationToken += 1
         didTriggerGameOverHaptic = false
         Haptics.lightImpact()
+        restart2DMoveHintTimer()
     }
 
     private func rematch() {
@@ -260,6 +284,16 @@ struct GameView: View {
         resetCameraToken += 1
     }
 
+    private func rotateBoardLeft() {
+        Haptics.selection()
+        rotateLeftToken += 1
+    }
+
+    private func rotateBoardRight() {
+        Haptics.selection()
+        rotateRightToken += 1
+    }
+
     private func resetMatchState() {
         aiTurnToken += 1
         isAITurnPending = false
@@ -272,9 +306,11 @@ struct GameView: View {
         moveCount = 0
         horizontalMoveCount = 0
         verticalMoveCount = 0
+        clear2DMoveHints()
         if let dailyChallenge {
             isDailyChallengeCompleted = dailyCompletionStore.isCompleted(dateKey: dailyChallenge.dateKey)
         }
+        restart2DMoveHintTimer()
     }
 
     private var canHumanMove: Bool {
@@ -301,6 +337,7 @@ struct GameView: View {
 
         previewPosition = nil
         aiPreviewPositions = []
+        clear2DMoveHints()
         isAITurnPending = true
         aiTurnToken += 1
         let activeToken = aiTurnToken
@@ -334,6 +371,7 @@ struct GameView: View {
             isAITurnPending = false
             previewPosition = nil
             aiPreviewPositions = []
+            restart2DMoveHintTimer()
         }
     }
 
@@ -354,6 +392,7 @@ struct GameView: View {
         incrementMoveCount(for: move.player)
         Haptics.lightImpact()
         SoundEffects.playMove()
+        restart2DMoveHintTimer()
     }
 
     private func incrementMoveCount(for player: Player) {
@@ -426,6 +465,42 @@ struct GameView: View {
             isDailyChallengeCompleted = true
             onDailyChallengeCompleted()
         }
+    }
+
+    private var shouldShowHintsAfterDelay: Bool {
+        guard boardMode == .classic else { return false }
+        guard !game.isFinished, game.winner == nil else { return false }
+        guard !isPlacementInputLocked else { return false }
+        guard !isAITurnPending else { return false }
+
+        switch configuration.mode {
+        case .pvp:
+            return true
+        case .playerVsAI:
+            return game.currentPlayer == .horizontal
+        }
+    }
+
+    private func restart2DMoveHintTimer() {
+        moveHintTimerToken += 1
+        show2DMoveHints = false
+        let currentToken = moveHintTimerToken
+
+        guard shouldShowHintsAfterDelay else {
+            return
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 5_000_000_000)
+            guard currentToken == moveHintTimerToken else { return }
+            guard shouldShowHintsAfterDelay else { return }
+            show2DMoveHints = true
+        }
+    }
+
+    private func clear2DMoveHints() {
+        moveHintTimerToken += 1
+        show2DMoveHints = false
     }
 }
 

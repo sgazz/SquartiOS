@@ -1,5 +1,5 @@
 enum GameBoardMode: String, CaseIterable, Identifiable {
-    case classic = "Classic"
+    case classic = "2D Board"
     case board3D = "3D Board"
 
     var id: Self { self }

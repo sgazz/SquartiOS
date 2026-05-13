@@ -14,6 +14,8 @@ struct GameHUDView: View {
     let onUndoLastMove: () -> Void
     let onResetGame: () -> Void
     let onResetCamera: () -> Void
+    let onRotateBoardLeft: () -> Void
+    let onRotateBoardRight: () -> Void
     let onChangeSetup: () -> Void
 
     var body: some View {
@@ -71,6 +73,18 @@ struct GameHUDView: View {
                 .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.975, pressedOpacity: 0.82))
 
                 if boardMode == .board3D {
+                    Button(action: onRotateBoardLeft) {
+                        HUDButtonLabel(title: "Left 90")
+                    }
+                    .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.975, pressedOpacity: 0.82))
+                    .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .trailing)))
+
+                    Button(action: onRotateBoardRight) {
+                        HUDButtonLabel(title: "Right 90")
+                    }
+                    .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.975, pressedOpacity: 0.82))
+                    .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .trailing)))
+
                     Button(action: onResetCamera) {
                         HUDButtonLabel(title: "Reset Camera")
                     }

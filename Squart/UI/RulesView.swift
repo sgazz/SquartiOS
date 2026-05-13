@@ -9,39 +9,39 @@ struct RulesView: View {
             palette.sheetBackground
                 .ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 24) {
-                header
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 24) {
+                    header
 
-                VStack(alignment: .leading, spacing: 18) {
-                    RulesSection(
-                        title: "Pieces",
-                        items: [
-                            "Horizontal places 2-cell pieces left-to-right.",
-                            "Vertical places 2-cell pieces top-to-bottom.",
-                            "Pieces can only be placed on empty active cells."
-                        ]
-                    )
+                    VStack(alignment: .leading, spacing: 18) {
+                        RulesSection(
+                            title: "Pieces",
+                            items: [
+                                "Horizontal places 2-cell pieces left-to-right.",
+                                "Vertical places 2-cell pieces top-to-bottom.",
+                                "Pieces can only be placed on empty active cells."
+                            ]
+                        )
 
-                    RulesSection(
-                        title: "Board",
-                        items: [
-                            "Blocker cells cannot be used.",
-                            "Diamond shape removes corners from the board.",
-                            "Inactive cells are tactical blockers."
-                        ]
-                    )
+                        RulesSection(
+                            title: "Board",
+                            items: [
+                                "Blocker cells cannot be used.",
+                                "Diamond shape removes corners from the board.",
+                                "Inactive cells are tactical blockers."
+                            ]
+                        )
 
-                    RulesSection(
-                        title: "Win Condition",
-                        items: [
-                            "A player loses when they have no valid move."
-                        ]
-                    )
+                        RulesSection(
+                            title: "Win Condition",
+                            items: [
+                                "A player loses when they have no valid move."
+                            ]
+                        )
+                    }
                 }
-
-                Spacer(minLength: 0)
+                .padding(28)
             }
-            .padding(28)
         }
     }
 

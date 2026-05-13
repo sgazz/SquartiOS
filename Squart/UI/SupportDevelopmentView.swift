@@ -21,57 +21,57 @@ struct SupportDevelopmentView: View {
             palette.sheetBackground
                 .ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 24) {
-                header
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 24) {
+                    header
 
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Squart is a native strategy game. Support helps keep it calm, independent, and carefully built.")
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundStyle(palette.bodyText)
-                        .fixedSize(horizontal: false, vertical: true)
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Squart is a native strategy game. Support helps keep it calm, independent, and carefully built.")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(palette.bodyText)
+                            .fixedSize(horizontal: false, vertical: true)
 
-                    Text("Squart Supporter unlocks the Premium Theme Pack. Gameplay stays fully available either way.")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(palette.mutedText)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    productState
-
-                    VStack(spacing: 12) {
-                        Button {
-                            Task {
-                                await storeManager.purchaseSupporter()
-                            }
-                        } label: {
-                            Text(purchaseButtonTitle)
-                        }
-                        .buttonStyle(SquartPrimaryButtonStyle(width: 260))
-                        .disabled(storeManager.supporterProduct == nil || storeManager.isSupporterPurchased)
-
-                        Button {
-                            Task {
-                                await storeManager.restorePurchases()
-                            }
-                        } label: {
-                            Text("Restore Purchases")
-                        }
-                        .buttonStyle(SquartSecondaryButtonStyle(width: 260))
-                    }
-                    .frame(maxWidth: .infinity)
-
-                    if let statusMessage = storeManager.statusMessage {
-                        Text(statusMessage)
-                            .font(.system(size: 13, weight: .medium))
+                        Text("Squart Supporter unlocks the Premium Theme Pack. Gameplay stays fully available either way.")
+                            .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(palette.mutedText)
                             .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                .padding(18)
-                .squartCard()
 
-                Spacer(minLength: 0)
+                        productState
+
+                        VStack(spacing: 12) {
+                            Button {
+                                Task {
+                                    await storeManager.purchaseSupporter()
+                                }
+                            } label: {
+                                Text(purchaseButtonTitle)
+                            }
+                            .buttonStyle(SquartPrimaryButtonStyle(width: 260))
+                            .disabled(storeManager.supporterProduct == nil || storeManager.isSupporterPurchased)
+
+                            Button {
+                                Task {
+                                    await storeManager.restorePurchases()
+                                }
+                            } label: {
+                                Text("Restore Purchases")
+                            }
+                            .buttonStyle(SquartSecondaryButtonStyle(width: 260))
+                        }
+                        .frame(maxWidth: .infinity)
+
+                        if let statusMessage = storeManager.statusMessage {
+                            Text(statusMessage)
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(palette.mutedText)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .padding(18)
+                    .squartCard()
+                }
+                .padding(28)
             }
-            .padding(28)
         }
         .task {
             await storeManager.refreshPurchasedProducts()
