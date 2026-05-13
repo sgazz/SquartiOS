@@ -4,15 +4,21 @@ struct RootView: View {
     private enum Screen {
         case landing
         case setup
-        case game(GameConfiguration)
+        case game(GameConfiguration, DailyChallenge?)
     }
 
     @State private var screen: Screen = .landing
     @State private var isShowingSettings = false
+    @State private var todayChallenge = DailyChallengeStore.shared.today()
+    @State private var isTodayChallengeCompleted = false
+    @StateObject private var storeManager = StoreManager.shared
+    @AppStorage(SquartThemeStore.selectedThemeIDKey) private var selectedThemeID = SquartVisualTheme.defaultTheme.id
 
     var body: some View {
+        let palette = selectedTheme.palette
+
         ZStack {
-            PremiumBackground()
+            PremiumBackground(palette: palette)
 
             switch screen {
             case .landing:
@@ -26,11 +32,11 @@ struct RootView: View {
                         VStack(spacing: 10) {
                             Text("Squart")
                                 .font(SquartTheme.titleFont(size: 52))
-                                .foregroundStyle(SquartTheme.Colors.primaryText)
+                                .foregroundStyle(palette.primaryText)
 
                             Text("A quiet tactical game of space, direction, and denial.")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundStyle(SquartTheme.Colors.mutedText)
+                                .foregroundStyle(palette.mutedText)
                                 .multilineTextAlignment(.center)
                                 .lineSpacing(3)
                                 .frame(maxWidth: 330)
@@ -43,25 +49,36 @@ struct RootView: View {
                         }
                         .buttonStyle(SquartPrimaryButtonStyle())
                         .padding(.top, 6)
+
+                        Button {
+                            Haptics.softImpact()
+                            screen = .game(todayChallenge.configuration, todayChallenge)
+                        } label: {
+                            dailyChallengeButtonLabel(palette: palette)
+                        }
+                        .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.985, pressedOpacity: 0.88))
+                        .accessibilityLabel(isTodayChallengeCompleted ? "Daily Challenge completed today" : "Daily Challenge available today")
                     }
 
                     Spacer()
 
-                    Text("Native iOS prototype")
+                    Text("Native iOS edition")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(SquartTheme.Colors.quietText)
+                        .foregroundStyle(palette.quietText)
                         .padding(.bottom, 20)
                 }
                 .padding(32)
             case .setup:
                 SetupView { configuration in
-                    screen = .game(configuration)
+                    screen = .game(configuration, nil)
                 } onBack: {
                     screen = .landing
                 }
-            case .game(let configuration):
-                GameView(configuration: configuration) {
+            case .game(let configuration, let dailyChallenge):
+                GameView(configuration: configuration, dailyChallenge: dailyChallenge) {
                     screen = .setup
+                } onDailyChallengeCompleted: {
+                    refreshDailyChallenge()
                 }
             }
         }
@@ -73,15 +90,15 @@ struct RootView: View {
                 } label: {
                     Image(systemName: "gearshape")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(SquartTheme.Colors.bodyText)
+                        .foregroundStyle(palette.bodyText)
                         .frame(width: 42, height: 42)
                         .background(
                             Circle()
-                                .fill(SquartTheme.Colors.panelGraphite)
-                                .overlay(Circle().stroke(SquartTheme.Colors.borderGraphite, lineWidth: 1))
+                                .fill(palette.panel)
+                                .overlay(Circle().stroke(palette.border, lineWidth: 1))
                         )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.96, pressedOpacity: 0.86))
                 .accessibilityLabel("Settings")
                 .padding(.top, 22)
                 .padding(.trailing, 22)
@@ -89,16 +106,73 @@ struct RootView: View {
         }
         .sheet(isPresented: $isShowingSettings) {
             SettingsView()
-                .presentationDetents([.height(350)])
+                .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
+        .task {
+            await storeManager.refreshPurchasedProducts()
+            sanitizeSelectedTheme()
+            refreshDailyChallenge()
+        }
+        .onChange(of: storeManager.purchasedProductIDs) { _, _ in
+            sanitizeSelectedTheme()
+        }
+        .environment(\.squartPalette, palette)
+        .animation(SquartTheme.themeTransitionAnimation, value: selectedThemeID)
+    }
+
+    private var selectedTheme: SquartVisualTheme {
+        let storedTheme = SquartVisualTheme(rawValue: selectedThemeID) ?? .defaultTheme
+        return themeAccess.usableTheme(for: storedTheme)
+    }
+
+    private var themeAccess: ThemeAccess {
+        ThemeAccess(purchasedProductIDs: storeManager.purchasedProductIDs)
+    }
+
+    private func sanitizeSelectedTheme() {
+        let usableTheme = selectedTheme
+        if usableTheme.id != selectedThemeID {
+            selectedThemeID = usableTheme.id
+        }
+    }
+
+    private func refreshDailyChallenge() {
+        todayChallenge = DailyChallengeStore.shared.today()
+        isTodayChallengeCompleted = DailyChallengeHistoryStore.shared.isCompleted(dateKey: todayChallenge.dateKey)
+    }
+
+    private func dailyChallengeButtonLabel(palette: SquartThemePalette) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: isTodayChallengeCompleted ? "checkmark.circle.fill" : "calendar")
+                .font(.system(size: 15, weight: .semibold))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(isTodayChallengeCompleted ? "Completed Today" : "Daily Challenge")
+                    .font(.system(size: 15, weight: .semibold))
+
+                Text(isTodayChallengeCompleted ? "Replay Today's Board" : "Today's Board is ready")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(palette.mutedText)
+            }
+        }
+        .foregroundStyle(palette.accent)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 11)
+        .background(
+            Capsule()
+                .stroke(palette.accent.opacity(isTodayChallengeCompleted ? 0.44 : 0.30), lineWidth: 1)
+                .background(Capsule().fill(palette.subtlePanel.opacity(0.76)))
+        )
     }
 }
 
 private struct PremiumBackground: View {
+    let palette: SquartThemePalette
+
     var body: some View {
-        SquartTheme.appBackground
-        .ignoresSafeArea()
+        palette.appBackground
+            .ignoresSafeArea()
     }
 }
 

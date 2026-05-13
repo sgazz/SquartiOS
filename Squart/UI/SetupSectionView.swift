@@ -4,17 +4,18 @@ struct SetupSectionView<Content: View>: View {
     let title: String
     let subtitle: String
     @ViewBuilder let content: Content
+    @Environment(\.squartPalette) private var palette
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(SquartTheme.Colors.strongText)
+                    .foregroundStyle(palette.strongText)
 
                 Text(subtitle)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(SquartTheme.Colors.mutedText)
+                    .foregroundStyle(palette.mutedText)
             }
 
             content
@@ -23,15 +24,15 @@ struct SetupSectionView<Content: View>: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: SquartTheme.Radius.small, style: .continuous)
-                .fill(SquartTheme.Colors.subtlePanelGraphite)
+                .fill(palette.subtlePanel)
         )
         .overlay(
             RoundedRectangle(cornerRadius: SquartTheme.Radius.small, style: .continuous)
                 .stroke(
                     LinearGradient(
                         colors: [
-                            SquartTheme.Colors.cappuccino.opacity(0.28),
-                            Color.white.opacity(0.06)
+                            palette.accent.opacity(0.28),
+                            palette.subtleBorder
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -45,11 +46,11 @@ struct SetupSectionView<Content: View>: View {
 
 #Preview {
     ZStack {
-        SquartTheme.Colors.sheetBackground.ignoresSafeArea()
+        SquartVisualTheme.defaultTheme.palette.sheetBackground.ignoresSafeArea()
 
         SetupSectionView(title: "Match", subtitle: "Choose the opponent rhythm.") {
             Text("Preview")
-                .foregroundStyle(SquartTheme.Colors.primaryText)
+                .foregroundStyle(SquartVisualTheme.defaultTheme.palette.primaryText)
         }
         .padding()
     }

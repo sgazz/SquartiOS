@@ -1,6 +1,10 @@
 import SwiftUI
 
 struct GameOverOverlay: View {
+    @Environment(\.squartPalette) private var palette
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var hasAppeared = false
+
     let winner: Player
     let stats: MatchStats
     let onUndo: (() -> Void)?
@@ -9,22 +13,22 @@ struct GameOverOverlay: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.42)
+            palette.backgroundBottom.opacity(0.56)
                 .ignoresSafeArea()
 
             VStack(spacing: 22) {
                 VStack(spacing: 8) {
                     Text("Game Over")
                         .font(SquartTheme.titleFont(size: 34))
-                        .foregroundStyle(SquartTheme.Colors.primaryText)
+                        .foregroundStyle(palette.primaryText)
 
                     Text("\(winner.displayName) wins")
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(SquartTheme.Colors.cappuccino)
+                        .foregroundStyle(palette.accent)
 
                     Text(resultLine)
                         .font(.system(size: 15, weight: .medium))
-                        .foregroundStyle(SquartTheme.Colors.mutedText)
+                        .foregroundStyle(palette.mutedText)
                         .multilineTextAlignment(.center)
                 }
 
@@ -35,7 +39,7 @@ struct GameOverOverlay: View {
                         Button(action: onUndo) {
                             OverlaySecondaryButtonLabel(title: "Undo", width: 286)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.985, pressedOpacity: 0.82))
                     }
 
                     HStack(spacing: 12) {
@@ -47,7 +51,7 @@ struct GameOverOverlay: View {
                         Button(action: onChangeSetup) {
                             OverlaySecondaryButtonLabel(title: "Change Setup", width: 142)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.985, pressedOpacity: 0.82))
                     }
                 }
             }
@@ -58,14 +62,21 @@ struct GameOverOverlay: View {
                     .fill(.ultraThinMaterial)
                     .overlay(
                         RoundedRectangle(cornerRadius: SquartTheme.Radius.overlay, style: .continuous)
-                            .fill(SquartTheme.Colors.sheetBackground.opacity(0.72))
+                            .fill(palette.sheetBackground.opacity(0.72))
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: SquartTheme.Radius.overlay, style: .continuous)
-                            .stroke(SquartTheme.Colors.cappuccino.opacity(0.22), lineWidth: 1)
+                            .stroke(palette.accent.opacity(0.22), lineWidth: 1)
                     )
             )
             .padding(24)
+            .scaleEffect(hasAppeared || reduceMotion ? 1 : 0.985)
+            .opacity(hasAppeared ? 1 : 0)
+            .onAppear {
+                withAnimation(reduceMotion ? nil : SquartTheme.microInteractionAnimation) {
+                    hasAppeared = true
+                }
+            }
         }
     }
 
@@ -88,6 +99,8 @@ struct MatchStats: Equatable {
 }
 
 private struct MatchStatsView: View {
+    @Environment(\.squartPalette) private var palette
+
     let stats: MatchStats
 
     var body: some View {
@@ -104,11 +117,13 @@ private struct MatchStatsView: View {
             }
         }
         .padding(12)
-        .squartCard(fill: SquartTheme.Colors.panelGraphite)
+        .squartCard(fill: palette.panel)
     }
 }
 
 private struct MatchStatPill: View {
+    @Environment(\.squartPalette) private var palette
+
     let title: String
     let value: String
 
@@ -116,17 +131,19 @@ private struct MatchStatPill: View {
         VStack(spacing: 2) {
             Text(title.uppercased())
                 .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(SquartTheme.Colors.quietText)
+                .foregroundStyle(palette.quietText)
 
             Text(value)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(SquartTheme.Colors.cappuccino)
+                .foregroundStyle(palette.accent)
         }
         .frame(maxWidth: .infinity)
     }
 }
 
 private struct MatchStatLine: View {
+    @Environment(\.squartPalette) private var palette
+
     let title: String
     let value: String
 
@@ -134,12 +151,12 @@ private struct MatchStatLine: View {
         HStack(spacing: 8) {
             Text(title)
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(SquartTheme.Colors.quietText)
+                .foregroundStyle(palette.quietText)
                 .frame(width: 42, alignment: .leading)
 
             Text(value)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(SquartTheme.Colors.bodyText)
+                .foregroundStyle(palette.bodyText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.82)
 
@@ -149,18 +166,20 @@ private struct MatchStatLine: View {
 }
 
 private struct OverlaySecondaryButtonLabel: View {
+    @Environment(\.squartPalette) private var palette
+
     let title: String
     let width: CGFloat
 
     var body: some View {
         Text(title)
             .font(.system(size: 16, weight: .medium))
-            .foregroundStyle(SquartTheme.Colors.bodyText)
+            .foregroundStyle(palette.bodyText)
             .frame(width: width, height: 48)
             .background(
                 Capsule()
-                    .stroke(Color.white.opacity(0.16), lineWidth: 1)
-                    .background(Capsule().fill(SquartTheme.Colors.subtlePanelGraphite))
+                    .stroke(palette.border.opacity(1.35), lineWidth: 1)
+                    .background(Capsule().fill(palette.subtlePanel))
             )
     }
 }

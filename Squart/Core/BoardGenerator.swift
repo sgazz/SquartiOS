@@ -10,7 +10,8 @@ nonisolated enum BoardGenerator {
     static func board(for configuration: GameConfiguration) -> SquartBoard {
         guard let board = board(
             for: configuration.boardShape,
-            inactiveCellRatio: configuration.inactiveCellRatio
+            inactiveCellRatio: configuration.inactiveCellRatio,
+            seed: configuration.boardSeed
         ) else {
             preconditionFailure("Unsupported board shape.")
         }
@@ -23,26 +24,42 @@ nonisolated enum BoardGenerator {
     }
 
     static func board(for shape: BoardShape, inactiveCellRatio: Double) -> SquartBoard? {
+        board(for: shape, inactiveCellRatio: inactiveCellRatio, seed: nil)
+    }
+
+    static func board(
+        for shape: BoardShape,
+        inactiveCellRatio: Double,
+        seed: UInt64?
+    ) -> SquartBoard? {
         switch shape {
         case .square(let size):
-            return square(size: size, inactiveCellRatio: inactiveCellRatio)
+            return board(
+                size: size,
+                playableCells: allCells(size: size),
+                inactiveCellRatio: inactiveCellRatio,
+                seed: seed
+            )
         case .diamond(let size):
             return board(
                 size: size,
                 playableCells: diamondCells(size: size),
-                inactiveCellRatio: inactiveCellRatio
+                inactiveCellRatio: inactiveCellRatio,
+                seed: seed
             )
         case .triangle(let size):
             return board(
                 size: size,
                 playableCells: triangleCells(size: size),
-                inactiveCellRatio: inactiveCellRatio
+                inactiveCellRatio: inactiveCellRatio,
+                seed: seed
             )
         case .circle(let diameter):
             return board(
                 size: diameter,
                 playableCells: circleCells(size: diameter),
-                inactiveCellRatio: inactiveCellRatio
+                inactiveCellRatio: inactiveCellRatio,
+                seed: seed
             )
         default:
             return nil
@@ -52,7 +69,8 @@ nonisolated enum BoardGenerator {
     private static func board(
         size: Int,
         playableCells: Set<BoardPosition>,
-        inactiveCellRatio: Double
+        inactiveCellRatio: Double,
+        seed: UInt64? = nil
     ) -> SquartBoard {
         let safeSize = max(2, size)
         let allCells = allCells(size: safeSize)
@@ -68,8 +86,23 @@ nonisolated enum BoardGenerator {
             return SquartBoard(rows: safeSize, columns: safeSize, outsideCells: outsideCells)
         }
 
-        var candidates = Array(playableCells.subtracting(protectedCells))
-        candidates.shuffle()
+        var candidates = playableCells
+            .subtracting(protectedCells)
+            .sorted { lhs, rhs in
+                if lhs.row == rhs.row {
+                    return lhs.column < rhs.column
+                }
+
+                return lhs.row < rhs.row
+            }
+
+        if let seed {
+            var generator = SeededRandomNumberGenerator(seed: seed)
+            candidates.shuffle(using: &generator)
+        } else {
+            candidates.shuffle()
+        }
+
         let inactiveCells = Set(candidates.prefix(targetInactiveCount))
 
         return SquartBoard(
@@ -170,5 +203,21 @@ nonisolated enum BoardGenerator {
             BoardPosition(row: center, column: min(center + 1, size - 1)),
             BoardPosition(row: min(center + 1, size - 1), column: center)
         ]
+    }
+}
+
+nonisolated private struct SeededRandomNumberGenerator: RandomNumberGenerator {
+    private var state: UInt64
+
+    init(seed: UInt64) {
+        self.state = seed
+    }
+
+    mutating func next() -> UInt64 {
+        state &+= 0x9E3779B97F4A7C15
+        var value = state
+        value = (value ^ (value >> 30)) &* 0xBF58476D1CE4E5B9
+        value = (value ^ (value >> 27)) &* 0x94D049BB133111EB
+        return value ^ (value >> 31)
     }
 }

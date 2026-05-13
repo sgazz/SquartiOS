@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct GameHUDView: View {
+    @Environment(\.squartPalette) private var palette
+
     let configuration: GameConfiguration
     let currentPlayer: Player
     let isAITurnPending: Bool
@@ -20,7 +22,7 @@ struct GameHUDView: View {
                 VStack(alignment: .leading, spacing: 7) {
                     Text("Squart")
                         .font(SquartTheme.titleFont(size: 28))
-                        .foregroundStyle(SquartTheme.Colors.primaryText)
+                        .foregroundStyle(palette.primaryText)
 
                     PlayerBadgeView(player: currentPlayer, isThinking: isAITurnPending)
                 }
@@ -30,11 +32,11 @@ struct GameHUDView: View {
                 VStack(alignment: .trailing, spacing: 6) {
                     Text("\(moveCount) moves")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(SquartTheme.Colors.cappuccino)
+                        .foregroundStyle(palette.accent)
 
                     Text(summaryText)
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(SquartTheme.Colors.mutedText)
+                        .foregroundStyle(palette.mutedText)
                         .multilineTextAlignment(.trailing)
                         .lineLimit(2)
                 }
@@ -46,37 +48,43 @@ struct GameHUDView: View {
                 }
             }
             .pickerStyle(.segmented)
-            .tint(SquartTheme.Colors.cappuccino)
+            .tint(palette.accent)
+            .onChange(of: boardMode) { _, _ in
+                Haptics.selection()
+            }
 
             HStack(spacing: 10) {
                 Button(action: onUndoLastMove) {
                     HUDButtonLabel(title: "Undo", isEnabled: canUndo)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.975, pressedOpacity: 0.80))
                 .disabled(!canUndo)
 
                 Button(action: onResetGame) {
                     HUDButtonLabel(title: "Reset Game")
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.975, pressedOpacity: 0.82))
 
                 Button(action: onChangeSetup) {
                     HUDButtonLabel(title: "Setup")
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.975, pressedOpacity: 0.82))
 
-                if boardMode == .preview3D {
+                if boardMode == .board3D {
                     Button(action: onResetCamera) {
                         HUDButtonLabel(title: "Reset Camera")
                     }
-                    .buttonStyle(.plain)
-                    .transition(.opacity)
+                    .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.975, pressedOpacity: 0.82))
+                    .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .trailing)))
                 }
             }
         }
         .padding(16)
-        .squartCard(cornerRadius: 16, fill: SquartTheme.Colors.panelGraphite, stroke: SquartTheme.Colors.borderGraphite)
+        .squartCard(cornerRadius: 16, fill: palette.panel, stroke: palette.border)
         .padding(.horizontal, 16)
+        .animation(SquartTheme.microInteractionAnimation, value: boardMode)
+        .animation(SquartTheme.microInteractionAnimation, value: canUndo)
+        .animation(SquartTheme.microInteractionAnimation, value: isAITurnPending)
     }
 
     private var summaryText: String {
@@ -94,21 +102,23 @@ struct GameHUDView: View {
 }
 
 private struct HUDButtonLabel: View {
+    @Environment(\.squartPalette) private var palette
+
     let title: String
     var isEnabled = true
 
     var body: some View {
         Text(title)
             .font(.system(size: 13, weight: .medium))
-            .foregroundStyle(Color.white.opacity(isEnabled ? 0.86 : 0.34))
+            .foregroundStyle(isEnabled ? palette.bodyText : palette.quietText.opacity(0.72))
             .lineLimit(1)
             .minimumScaleFactor(0.78)
             .frame(maxWidth: .infinity)
             .frame(height: 36)
             .background(
                 Capsule()
-                    .stroke(Color.white.opacity(0.14), lineWidth: 1)
-                    .background(Capsule().fill(SquartTheme.Colors.subtlePanelGraphite.opacity(isEnabled ? 1 : 0.56)))
+                    .stroke(palette.border, lineWidth: 1)
+                    .background(Capsule().fill(palette.subtlePanel.opacity(isEnabled ? 1 : 0.56)))
             )
     }
 }

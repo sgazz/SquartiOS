@@ -1,9 +1,7 @@
 import SwiftUI
 
 struct SquartLogoView: View {
-    private let cappuccino = SquartTheme.Colors.cappuccino
-    private let bronze = SquartTheme.Colors.bronze
-    private let graphite = SquartTheme.Colors.backgroundMid
+    @Environment(\.squartPalette) private var palette
 
     var body: some View {
         ZStack {
@@ -11,8 +9,8 @@ struct SquartLogoView: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color.white.opacity(0.09),
-                            Color.white.opacity(0.025)
+                            palette.panel.opacity(1.6),
+                            palette.subtlePanel.opacity(0.72)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -20,9 +18,9 @@ struct SquartLogoView: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: SquartTheme.Radius.logo, style: .continuous)
-                        .stroke(cappuccino.opacity(0.20), lineWidth: 1)
+                        .stroke(palette.accent.opacity(0.20), lineWidth: 1)
                 )
-                .shadow(color: cappuccino.opacity(0.12), radius: 28, y: 14)
+                .shadow(color: palette.accent.opacity(0.12), radius: 28, y: 14)
 
             boardMark
                 .padding(18)
@@ -66,9 +64,15 @@ struct SquartLogoView: View {
             }
         }
     }
+
+    private var cappuccino: Color { palette.accent }
+    private var bronze: Color { palette.secondaryAccent }
+    private var graphite: Color { palette.backgroundMid }
 }
 
 private struct LogoTile: View {
+    @Environment(\.squartPalette) private var palette
+
     let x: CGFloat
     let y: CGFloat
     let size: CGFloat
@@ -81,14 +85,16 @@ private struct LogoTile: View {
             .frame(width: size, height: size)
             .overlay(
                 RoundedRectangle(cornerRadius: SquartTheme.Radius.small - 1, style: .continuous)
-                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                    .stroke(palette.subtleBorder, lineWidth: 1)
             )
-            .shadow(color: Color.black.opacity(0.22), radius: 8, y: 4 + lift)
+            .shadow(color: palette.backgroundBottom.opacity(0.26), radius: 8, y: 4 + lift)
             .position(x: x + size / 2, y: y + size / 2 - lift)
     }
 }
 
 private struct DominoBar: View {
+    @Environment(\.squartPalette) private var palette
+
     let x: CGFloat
     let y: CGFloat
     let width: CGFloat
@@ -111,16 +117,16 @@ private struct DominoBar: View {
             .frame(width: width, height: height)
             .overlay(
                 RoundedRectangle(cornerRadius: SquartTheme.Radius.small, style: .continuous)
-                    .stroke(Color.white.opacity(0.16), lineWidth: 1)
+                    .stroke(palette.border.opacity(1.2), lineWidth: 1)
             )
-            .shadow(color: Color.black.opacity(0.30), radius: 10, y: 5 + lift)
+            .shadow(color: palette.backgroundBottom.opacity(0.34), radius: 10, y: 5 + lift)
             .position(x: x + width / 2, y: y + height / 2 - lift)
     }
 }
 
 #Preview {
     ZStack {
-        SquartTheme.Colors.sheetBackground
+        SquartVisualTheme.defaultTheme.palette.sheetBackground
             .ignoresSafeArea()
 
         SquartLogoView()

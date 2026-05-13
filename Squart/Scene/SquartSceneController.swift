@@ -17,6 +17,8 @@ final class SquartSceneController {
     private var lastPreviewPositions: Set<BoardPosition> = []
     private var lastAIPreviewPositions: Set<BoardPosition> = []
     private var lastMoveAnimationToken = 0
+    private var visualTheme = SquartVisualTheme.defaultTheme
+    private var materials = SquartSceneMaterials(theme: .defaultTheme)
 
     init() {
         self.cameraController = CameraController(scene: scene)
@@ -26,19 +28,13 @@ final class SquartSceneController {
     // MARK: - Scene Setup
 
     private func setupScene() {
-        scene.background.contents = SquartSceneMaterials.background
-        scene.fogStartDistance = 24
-        scene.fogEndDistance = 42
-        scene.fogDensityExponent = 0.55
-        scene.fogColor = SquartSceneMaterials.background
-
         boardRootNode.name = NodeName.boardRoot
         if scene.rootNode.childNode(withName: NodeName.boardRoot, recursively: false) == nil {
             scene.rootNode.addChildNode(boardRootNode)
         }
 
-        setupLightingIfNeeded()
-        validateStaticSceneInDebug()
+        applySceneStyle()
+        validateStaticSceneIntegrity()
     }
 
     // MARK: - Updates
@@ -49,8 +45,16 @@ final class SquartSceneController {
         aiPreviewPositions: Set<BoardPosition>,
         lastMovePositions: Set<BoardPosition>,
         moveAnimationToken: Int,
-        viewportSize: CGSize
+        viewportSize: CGSize,
+        visualTheme: SquartVisualTheme
     ) {
+        let didChangeTheme = visualTheme != self.visualTheme
+        if didChangeTheme {
+            self.visualTheme = visualTheme
+            materials.apply(theme: visualTheme, animated: true)
+            applySceneStyle(animated: true)
+        }
+
         let didUpdateCamera = cameraController.configureForBoard(
             rows: board.rows,
             columns: board.columns,
@@ -80,7 +84,8 @@ final class SquartSceneController {
             BoardNodeFactory.makeBoardNode(
                 from: board,
                 previewPositions: previewPositions,
-                aiPreviewPositions: aiPreviewPositions
+                aiPreviewPositions: aiPreviewPositions,
+                materials: materials
             )
         )
 
@@ -88,7 +93,7 @@ final class SquartSceneController {
             animateMove(at: lastMovePositions)
         }
 
-        validateStaticSceneInDebug()
+        validateStaticSceneIntegrity()
     }
 
     // MARK: - Camera Controls
@@ -124,17 +129,40 @@ final class SquartSceneController {
 
     // MARK: - Lighting
 
-    private func setupLightingIfNeeded() {
-        scene.lightingEnvironment.contents = SquartSceneMaterials.environment
-        scene.lightingEnvironment.intensity = 0.24
+    private func applySceneStyle(animated: Bool = false) {
+        let changes = {
+            self.scene.background.contents = self.materials.background
+            self.scene.fogStartDistance = self.materials.fog.startDistance
+            self.scene.fogEndDistance = self.materials.fog.endDistance
+            self.scene.fogDensityExponent = self.materials.fog.densityExponent
+            self.scene.fogColor = self.materials.background
+            self.scene.lightingEnvironment.contents = self.materials.environment
+            self.scene.lightingEnvironment.intensity = self.materials.lighting.environmentIntensity
+            self.setupLightingIfNeeded(self.materials.lighting)
+        }
 
+        guard animated else {
+            SCNTransaction.begin()
+            SCNTransaction.animationDuration = 0
+            changes()
+            SCNTransaction.commit()
+            return
+        }
+
+        SCNTransaction.begin()
+        SCNTransaction.animationDuration = SquartTheme.themeTransitionDuration
+        changes()
+        SCNTransaction.commit()
+    }
+
+    private func setupLightingIfNeeded(_ lighting: SquartSceneLighting) {
         upsertLightNode(named: NodeName.ambientLight) { node in
             let ambientLight = node.light ?? SCNLight()
             node.light = ambientLight
 
             ambientLight.type = .ambient
-            ambientLight.intensity = 340
-            ambientLight.temperature = 4_350
+            ambientLight.intensity = lighting.ambientIntensity
+            ambientLight.temperature = lighting.ambientTemperature
         }
 
         upsertLightNode(named: NodeName.keyLight) { node in
@@ -142,15 +170,15 @@ final class SquartSceneController {
             node.light = keyLight
 
             keyLight.type = .area
-            keyLight.intensity = 95
-            keyLight.temperature = 4_200
+            keyLight.intensity = lighting.keyIntensity
+            keyLight.temperature = lighting.keyTemperature
             keyLight.areaType = .rectangle
             keyLight.areaExtents = simd_float3(18, 18, 1)
             keyLight.castsShadow = true
             keyLight.shadowMode = .deferred
             keyLight.shadowRadius = 18
             keyLight.shadowSampleCount = 24
-            keyLight.shadowColor = PlatformColor.black.withAlphaComponent(0.10)
+            keyLight.shadowColor = PlatformColor.black.withAlphaComponent(lighting.shadowOpacity)
 
             node.position = SCNVector3(0, 8.5, 0)
             node.look(at: SCNVector3(0, 0, 0))
@@ -161,8 +189,8 @@ final class SquartSceneController {
             node.light = fillLight
 
             fillLight.type = .omni
-            fillLight.intensity = 260
-            fillLight.temperature = 4_500
+            fillLight.intensity = lighting.fillIntensity
+            fillLight.temperature = lighting.fillTemperature
 
             node.position = SCNVector3(-4.8, 4.6, -4.8)
         }
@@ -172,8 +200,8 @@ final class SquartSceneController {
             node.light = rimLight
 
             rimLight.type = .omni
-            rimLight.intensity = 210
-            rimLight.temperature = 4_900
+            rimLight.intensity = lighting.rimIntensity
+            rimLight.temperature = lighting.rimTemperature
 
             node.position = SCNVector3(4.8, 4.6, 4.8)
         }
@@ -189,7 +217,7 @@ final class SquartSceneController {
         }
     }
 
-    private func validateStaticSceneInDebug() {
+    private func validateStaticSceneIntegrity() {
         #if DEBUG
         let staticNodeNames = [
             NodeName.ambientLight,

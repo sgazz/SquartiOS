@@ -2,8 +2,11 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.squartPalette) private var palette
     @State private var settings: AppSettings
     @State private var isShowingSupportDevelopment = false
+    @State private var isShowingThemes = false
+    @State private var isShowingAppIcons = false
 
     private let store: AppSettingsStore
 
@@ -14,43 +17,65 @@ struct SettingsView: View {
 
     var body: some View {
         ZStack {
-            SquartTheme.Colors.sheetBackground
+            palette.sheetBackground
                 .ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 24) {
-                header
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 24) {
+                    header
 
-                VStack(spacing: 12) {
-                    settingsToggle(
-                        title: "Haptics",
-                        subtitle: "Subtle feedback for moves and controls.",
-                        isOn: hapticsBinding
-                    )
-
-                    settingsToggle(
-                        title: "Sound Effects",
-                        subtitle: "Prepared for future move and match sounds.",
-                        isOn: soundEffectsBinding
-                    )
-
-                    Button {
-                        isShowingSupportDevelopment = true
-                    } label: {
-                        settingsRow(
-                            title: "Support Development",
-                            subtitle: "Optional one-time support for Squart."
+                    VStack(spacing: 12) {
+                        settingsToggle(
+                            title: "Haptics",
+                            subtitle: "Subtle feedback for moves and controls.",
+                            isOn: hapticsBinding
                         )
-                    }
-                    .buttonStyle(.plain)
-                }
 
-                Spacer(minLength: 0)
+                        Button {
+                            isShowingThemes = true
+                        } label: {
+                            settingsRow(
+                                title: "Themes",
+                                subtitle: "Choose Squart's visual mood."
+                            )
+                        }
+                        .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.99, pressedOpacity: 0.88))
+
+                        Button {
+                            isShowingAppIcons = true
+                        } label: {
+                            settingsRow(
+                                title: "App Icons",
+                                subtitle: "Match the Home Screen icon to your theme."
+                            )
+                        }
+                        .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.99, pressedOpacity: 0.88))
+
+                        Button {
+                            isShowingSupportDevelopment = true
+                        } label: {
+                            settingsRow(
+                                title: "Support Development",
+                                subtitle: "Optional one-time support for Squart."
+                            )
+                        }
+                        .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.99, pressedOpacity: 0.88))
+                    }
+                }
+                .padding(28)
             }
-            .padding(28)
         }
         .sheet(isPresented: $isShowingSupportDevelopment) {
             SupportDevelopmentView()
                 .presentationDetents([.height(430), .medium])
+        }
+        .sheet(isPresented: $isShowingThemes) {
+            ThemePickerView()
+                .presentationDetents([.large])
+        }
+        .sheet(isPresented: $isShowingAppIcons) {
+            AppIconPickerView()
+                .presentationDetents([.large])
         }
     }
 
@@ -59,11 +84,11 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Settings")
                     .font(SquartTheme.titleFont(size: 28))
-                    .foregroundStyle(SquartTheme.Colors.primaryText)
+                    .foregroundStyle(palette.primaryText)
 
                 Text("Keep the experience quiet and tactile.")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(SquartTheme.Colors.mutedText)
+                    .foregroundStyle(palette.mutedText)
             }
 
             Spacer()
@@ -73,11 +98,11 @@ struct SettingsView: View {
             } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(SquartTheme.Colors.bodyText)
+                    .foregroundStyle(palette.bodyText)
                     .frame(width: 34, height: 34)
-                    .background(Circle().fill(SquartTheme.Colors.panelGraphite))
+                    .background(Circle().fill(palette.panel))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.94, pressedOpacity: 0.82))
             .accessibilityLabel("Close settings")
         }
     }
@@ -88,15 +113,7 @@ struct SettingsView: View {
         } set: { isEnabled in
             settings.isHapticsEnabled = isEnabled
             store.save(settings)
-        }
-    }
-
-    private var soundEffectsBinding: Binding<Bool> {
-        Binding {
-            settings.isSoundEffectsEnabled
-        } set: { isEnabled in
-            settings.isSoundEffectsEnabled = isEnabled
-            store.save(settings)
+            Haptics.selection()
         }
     }
 
@@ -105,17 +122,18 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(SquartTheme.Colors.strongText)
+                    .foregroundStyle(palette.strongText)
 
                 Text(subtitle)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(SquartTheme.Colors.mutedText)
+                    .foregroundStyle(palette.mutedText)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .tint(SquartTheme.Colors.cappuccino)
+        .tint(palette.accent)
         .padding(18)
         .squartCard()
+        .animation(SquartTheme.microInteractionAnimation, value: isOn.wrappedValue)
     }
 
     private func settingsRow(title: String, subtitle: String) -> some View {
@@ -123,11 +141,11 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(SquartTheme.Colors.strongText)
+                    .foregroundStyle(palette.strongText)
 
                 Text(subtitle)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(SquartTheme.Colors.mutedText)
+                    .foregroundStyle(palette.mutedText)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -135,7 +153,7 @@ struct SettingsView: View {
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(SquartTheme.Colors.cappuccino)
+                .foregroundStyle(palette.accent)
         }
         .padding(18)
         .squartCard()

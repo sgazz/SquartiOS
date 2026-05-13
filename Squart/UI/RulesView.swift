@@ -2,10 +2,11 @@ import SwiftUI
 
 struct RulesView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.squartPalette) private var palette
 
     var body: some View {
         ZStack {
-            SquartTheme.Colors.sheetBackground
+            palette.sheetBackground
                 .ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 24) {
@@ -49,11 +50,11 @@ struct RulesView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("How to Play")
                     .font(SquartTheme.titleFont(size: 28))
-                    .foregroundStyle(SquartTheme.Colors.primaryText)
+                    .foregroundStyle(palette.primaryText)
 
                 Text("Quiet territory, two cells at a time.")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(SquartTheme.Colors.mutedText)
+                    .foregroundStyle(palette.mutedText)
             }
 
             Spacer()
@@ -63,11 +64,11 @@ struct RulesView: View {
             } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(SquartTheme.Colors.bodyText)
+                    .foregroundStyle(palette.bodyText)
                     .frame(width: 34, height: 34)
-                    .background(Circle().fill(SquartTheme.Colors.panelGraphite))
+                    .background(Circle().fill(palette.panel))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.94, pressedOpacity: 0.82))
             .accessibilityLabel("Close rules")
         }
     }
@@ -76,24 +77,25 @@ struct RulesView: View {
 private struct RulesSection: View {
     let title: String
     let items: [String]
+    @Environment(\.squartPalette) private var palette
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title.uppercased())
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(SquartTheme.Colors.cappuccino)
+                .foregroundStyle(palette.accent)
 
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(items, id: \.self) { item in
                     HStack(alignment: .top, spacing: 10) {
                         Circle()
-                            .fill(SquartTheme.Colors.cappuccino.opacity(0.72))
+                            .fill(palette.accent.opacity(0.72))
                             .frame(width: 4, height: 4)
                             .padding(.top, 7)
 
                         Text(item)
                             .font(.system(size: 15, weight: .regular))
-                            .foregroundStyle(SquartTheme.Colors.bodyText)
+                            .foregroundStyle(palette.bodyText)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }

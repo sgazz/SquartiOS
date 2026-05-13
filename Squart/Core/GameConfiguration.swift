@@ -6,13 +6,15 @@ nonisolated struct GameConfiguration: Equatable, Sendable {
     let boardShape: BoardShape
     let boardSize: Int
     let inactiveCellRatio: Double
+    let boardSeed: UInt64?
 
     init(
         mode: GameMode = .pvp,
         aiDifficulty: AIDifficulty = .easy,
         boardShape: BoardShape? = nil,
         boardSize: Int = 10,
-        inactiveCellRatio: Double = 0.18
+        inactiveCellRatio: Double = 0.18,
+        boardSeed: UInt64? = nil
     ) {
         let sanitizedBoardSize = max(2, boardSize)
 
@@ -21,5 +23,6 @@ nonisolated struct GameConfiguration: Equatable, Sendable {
         self.boardSize = sanitizedBoardSize
         self.boardShape = boardShape ?? .square(size: sanitizedBoardSize)
         self.inactiveCellRatio = min(max(inactiveCellRatio, 0), 0.75)
+        self.boardSeed = boardSeed
     }
 }
