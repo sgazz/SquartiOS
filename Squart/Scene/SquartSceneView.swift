@@ -2,15 +2,26 @@ import SwiftUI
 import SceneKit
 import UIKit
 
+private final class LayoutAwareSceneView: SCNView {
+    var onLayoutChange: ((CGSize) -> Void)?
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        onLayoutChange?(bounds.size)
+    }
+}
+
 struct SquartSceneView: UIViewRepresentable {
     @AppStorage(SquartThemeStore.selectedThemeIDKey) private var selectedThemeID = SquartVisualTheme.defaultTheme.id
 
     let board: SquartBoard
+    let viewportHint: CGSize
     let previewPositions: Set<BoardPosition>
     let aiPreviewPositions: Set<BoardPosition>
     let lastMovePositions: Set<BoardPosition>
     let moveAnimationToken: Int
     let resetCameraToken: Int
+    let forceFitToken: Int
     let rotateLeftToken: Int
     let rotateRightToken: Int
     let onTileTapped: (BoardPosition) -> Void
@@ -18,6 +29,7 @@ struct SquartSceneView: UIViewRepresentable {
     func makeCoordinator() -> Coordinator {
         Coordinator(
             resetCameraToken: resetCameraToken,
+            forceFitToken: forceFitToken,
             rotateLeftToken: rotateLeftToken,
             rotateRightToken: rotateRightToken,
             onTileTapped: onTileTapped
@@ -25,13 +37,16 @@ struct SquartSceneView: UIViewRepresentable {
     }
 
     func makeUIView(context: Context) -> SCNView {
-        let sceneView = SCNView()
+        let sceneView = LayoutAwareSceneView()
         sceneView.scene = context.coordinator.controller.scene
         sceneView.backgroundColor = .clear
         sceneView.antialiasingMode = .multisampling4X
         sceneView.allowsCameraControl = false
         sceneView.autoenablesDefaultLighting = false
         sceneView.isJitteringEnabled = false
+        sceneView.onLayoutChange = { [weak coordinator = context.coordinator] size in
+            coordinator?.controller.viewportDidChange(size)
+        }
         context.coordinator.installGestures(on: sceneView)
         context.coordinator.controller.update(
             board: board,
@@ -39,7 +54,7 @@ struct SquartSceneView: UIViewRepresentable {
             aiPreviewPositions: aiPreviewPositions,
             lastMovePositions: lastMovePositions,
             moveAnimationToken: moveAnimationToken,
-            viewportSize: sceneView.bounds.size,
+            viewportSize: resolvedViewportSize(for: sceneView),
             visualTheme: visualTheme
         )
         return sceneView
@@ -47,7 +62,8 @@ struct SquartSceneView: UIViewRepresentable {
 
     func updateUIView(_ sceneView: SCNView, context: Context) {
         context.coordinator.onTileTapped = onTileTapped
-        context.coordinator.resetCameraIfNeeded(resetCameraToken)
+        context.coordinator.resetCameraIfNeeded(resetCameraToken, sceneView: sceneView)
+        context.coordinator.forceFitIfNeeded(forceFitToken, sceneView: sceneView)
         context.coordinator.rotateLeftIfNeeded(rotateLeftToken)
         context.coordinator.rotateRightIfNeeded(rotateRightToken)
         context.coordinator.controller.update(
@@ -56,7 +72,7 @@ struct SquartSceneView: UIViewRepresentable {
             aiPreviewPositions: aiPreviewPositions,
             lastMovePositions: lastMovePositions,
             moveAnimationToken: moveAnimationToken,
-            viewportSize: sceneView.bounds.size,
+            viewportSize: resolvedViewportSize(for: sceneView),
             visualTheme: visualTheme
         )
     }
@@ -65,20 +81,31 @@ struct SquartSceneView: UIViewRepresentable {
         SquartVisualTheme(rawValue: selectedThemeID) ?? .defaultTheme
     }
 
+    private func resolvedViewportSize(for sceneView: SCNView) -> CGSize {
+        let bounds = sceneView.bounds.size
+        if SquartSceneController.isUsableViewport(bounds) {
+            return bounds
+        }
+        return viewportHint
+    }
+
     final class Coordinator: NSObject, UIGestureRecognizerDelegate {
         let controller = SquartSceneController()
         var onTileTapped: (BoardPosition) -> Void
         private var lastResetCameraToken: Int
+        private var lastForceFitToken: Int
         private var lastRotateLeftToken: Int
         private var lastRotateRightToken: Int
 
         init(
             resetCameraToken: Int,
+            forceFitToken: Int,
             rotateLeftToken: Int,
             rotateRightToken: Int,
             onTileTapped: @escaping (BoardPosition) -> Void
         ) {
             self.lastResetCameraToken = resetCameraToken
+            self.lastForceFitToken = forceFitToken
             self.lastRotateLeftToken = rotateLeftToken
             self.lastRotateRightToken = rotateRightToken
             self.onTileTapped = onTileTapped
@@ -108,13 +135,13 @@ struct SquartSceneView: UIViewRepresentable {
             }
         }
 
-        func resetCameraIfNeeded(_ token: Int) {
+        func resetCameraIfNeeded(_ token: Int, sceneView: SCNView) {
             guard token != lastResetCameraToken else {
                 return
             }
 
             lastResetCameraToken = token
-            controller.resetCamera()
+            controller.resetCamera(viewportSize: sceneView.bounds.size)
         }
 
         func rotateLeftIfNeeded(_ token: Int) {
@@ -124,6 +151,15 @@ struct SquartSceneView: UIViewRepresentable {
 
             lastRotateLeftToken = token
             controller.rotateCameraLeft90()
+        }
+
+        func forceFitIfNeeded(_ token: Int, sceneView: SCNView) {
+            guard token != lastForceFitToken else {
+                return
+            }
+
+            lastForceFitToken = token
+            controller.forceFitToViewport(viewportSize: sceneView.bounds.size, reason: "enter3D")
         }
 
         func rotateRightIfNeeded(_ token: Int) {

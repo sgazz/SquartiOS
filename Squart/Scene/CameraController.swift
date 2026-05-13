@@ -10,6 +10,8 @@ final class CameraController {
     private enum Defaults {
         static let height: Float = 14.8
         static let topDownPitch = -Float.pi / 2
+        static let targetFill: Double = 0.86
+        static let minimumUsableViewportSide: CGFloat = 100
 
         static let minOrthographicScale: Double = 4.2
         static let maxOrthographicScale: Double = 26.0
@@ -18,8 +20,7 @@ final class CameraController {
     private let cameraNode = SCNNode()
     private var defaultOrthographicScale = 10.2
     private var orthographicScale = 10.2
-    private var boardSize: (rows: Int, columns: Int)?
-    private var viewportAspect: Double = 1
+    private var fitSignature: FitSignature?
 
     init(scene: SCNScene) {
         let camera = SCNCamera()
@@ -41,31 +42,36 @@ final class CameraController {
     }
 
     @discardableResult
-    func configureForBoard(rows: Int, columns: Int, viewportSize: CGSize) -> Bool {
-        guard viewportSize.width > 0, viewportSize.height > 0 else {
+    func configureDefaultFit(
+        planarBoardSize: CGSize,
+        viewportSize: CGSize,
+        applyZoom: Bool
+    ) -> Bool {
+        guard Self.isUsableViewport(viewportSize) else {
+            return false
+        }
+        guard planarBoardSize.width > 0, planarBoardSize.height > 0 else {
             return false
         }
 
-        let nextViewportAspect = Self.viewportAspect(for: viewportSize)
-
-        guard
-            boardSize?.rows != rows ||
-                boardSize?.columns != columns ||
-                abs(viewportAspect - nextViewportAspect) > 0.02
-        else {
+        let aspect = Self.viewportAspect(for: viewportSize)
+        let signature = FitSignature(planarSize: planarBoardSize, viewportAspect: aspect)
+        guard signature != fitSignature else {
             return false
         }
 
-        boardSize = (rows, columns)
-        viewportAspect = nextViewportAspect
+        fitSignature = signature
         defaultOrthographicScale = Self.defaultScale(
-            rows: rows,
-            columns: columns,
-            viewportAspect: nextViewportAspect
+            planarBoardSize: planarBoardSize,
+            viewportAspect: aspect
         )
-        orthographicScale = defaultOrthographicScale
-        cameraNode.camera?.orthographicScale = orthographicScale
-        applyCameraPosition()
+
+        if applyZoom {
+            orthographicScale = defaultOrthographicScale
+            cameraNode.camera?.orthographicScale = orthographicScale
+            applyCameraPosition()
+        }
+
         return true
     }
 
@@ -81,7 +87,7 @@ final class CameraController {
         cameraNode.camera?.orthographicScale = orthographicScale
     }
 
-    func reset() {
+    func resetToDefaultFit() {
         orthographicScale = defaultOrthographicScale
         cameraNode.camera?.orthographicScale = orthographicScale
         applyCameraPosition(animated: true)
@@ -109,23 +115,47 @@ final class CameraController {
         SCNTransaction.commit()
     }
 
-    private static func defaultScale(rows: Int, columns: Int, viewportAspect: Double) -> Double {
-        let desiredFill = 0.91
-        let boardWidth = Double(columns) * 0.96 + 0.44
-        let boardHeight = Double(rows) * 0.96 + 0.44
-        let scaleForWidth = boardWidth / (desiredFill * viewportAspect)
-        let scaleForHeight = boardHeight / desiredFill
+    private static func defaultScale(planarBoardSize: CGSize, viewportAspect: Double) -> Double {
+        // orthographicScale is measured on the projection axis (vertical by default),
+        // so visible world height is approximately orthographicScale * 2.
+        let halfBoardWidth = Double(planarBoardSize.width) / 2
+        let halfBoardHeight = Double(planarBoardSize.height) / 2
+        let scaleForWidth = halfBoardWidth / (Defaults.targetFill * viewportAspect)
+        let scaleForHeight = halfBoardHeight / Defaults.targetFill
 
         return max(scaleForWidth, scaleForHeight)
             .clamped(to: Defaults.minOrthographicScale...Defaults.maxOrthographicScale)
     }
 
     private static func viewportAspect(for size: CGSize) -> Double {
-        guard size.width > 0, size.height > 0 else {
+        guard Self.isUsableViewport(size) else {
             return 1
         }
 
         return max(0.35, min(2.4, Double(size.width / size.height)))
+    }
+
+    private static func isUsableViewport(_ size: CGSize) -> Bool {
+        guard size.width.isFinite, size.height.isFinite else {
+            return false
+        }
+        guard !size.width.isNaN, !size.height.isNaN else {
+            return false
+        }
+        return size.width >= Defaults.minimumUsableViewportSide &&
+            size.height >= Defaults.minimumUsableViewportSide
+    }
+}
+
+private struct FitSignature: Equatable {
+    let widthBucket: Int
+    let heightBucket: Int
+    let aspectBucket: Int
+
+    init(planarSize: CGSize, viewportAspect: Double) {
+        widthBucket = Int((Double(planarSize.width) * 100).rounded())
+        heightBucket = Int((Double(planarSize.height) * 100).rounded())
+        aspectBucket = Int((viewportAspect * 100).rounded())
     }
 }
 
