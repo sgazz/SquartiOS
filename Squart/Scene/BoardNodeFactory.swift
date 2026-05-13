@@ -12,9 +12,11 @@ enum BoardNodeFactory {
     static func makeBoardNode(
         from board: SquartBoard,
         previewPositions: Set<BoardPosition>,
-        aiPreviewPositions: Set<BoardPosition>
+        aiPreviewPositions: Set<BoardPosition>,
+        materials: SquartSceneMaterials
     ) -> SCNNode {
         let rootNode = SCNNode()
+        let geometry = BoardGeometry(materials: materials)
         let spacing = tileSize + gap
         let xOffset = CGFloat(board.columns - 1) * spacing / 2
         let zOffset = CGFloat(board.rows - 1) * spacing / 2
@@ -27,7 +29,8 @@ enum BoardNodeFactory {
                     for: state,
                     at: position,
                     isPreviewed: previewPositions.contains(position),
-                    isAIPreviewed: aiPreviewPositions.contains(position)
+                    isAIPreviewed: aiPreviewPositions.contains(position),
+                    geometry: geometry
                 )
 
                 tileNode.position = SCNVector3(
@@ -44,9 +47,10 @@ enum BoardNodeFactory {
             from: board,
             spacing: spacing,
             xOffset: xOffset,
-            zOffset: zOffset
+            zOffset: zOffset,
+            geometry: geometry
         )
-        rootNode.addChildNode(makeBaseNode(rows: board.rows, columns: board.columns))
+        rootNode.addChildNode(makeBaseNode(rows: board.rows, columns: board.columns, materials: materials))
         return rootNode
     }
 
@@ -100,7 +104,8 @@ enum BoardNodeFactory {
         for state: CellState,
         at position: BoardPosition,
         isPreviewed: Bool,
-        isAIPreviewed: Bool
+        isAIPreviewed: Bool,
+        geometry: BoardGeometry
     ) -> SCNNode {
         if state == .outside {
             let node = SCNNode()
@@ -108,20 +113,20 @@ enum BoardNodeFactory {
             return node
         }
 
-        let node = SCNNode(geometry: tileGeometry(for: state))
+        let node = SCNNode(geometry: tileGeometry(for: state, geometry: geometry))
         node.name = name(for: position)
         node.castsShadow = true
 
         if state == .inactive {
-            node.addChildNode(makeBlockerCap())
+            node.addChildNode(makeBlockerCap(geometry: geometry))
         }
 
         if isPreviewed {
-            node.addChildNode(makePreviewNode(style: .human))
+            node.addChildNode(makePreviewNode(style: .human, geometry: geometry))
         }
 
         if isAIPreviewed {
-            node.addChildNode(makePreviewNode(style: .ai))
+            node.addChildNode(makePreviewNode(style: .ai, geometry: geometry))
         }
 
         return node
@@ -129,21 +134,21 @@ enum BoardNodeFactory {
 
     // MARK: - Preview
 
-    private static func makePreviewNode(style: PreviewStyle) -> SCNNode {
+    private static func makePreviewNode(style: PreviewStyle, geometry: BoardGeometry) -> SCNNode {
         let rootNode = SCNNode()
 
-        let fillNode = SCNNode(geometry: style.fillGeometry)
+        let fillNode = SCNNode(geometry: style.fillGeometry(in: geometry))
         fillNode.position = SCNVector3(0, 0.018, 0)
         rootNode.addChildNode(fillNode)
 
         for z in [-0.39, 0.39] as [CGFloat] {
-            let railNode = SCNNode(geometry: style.horizontalRailGeometry)
+            let railNode = SCNNode(geometry: style.horizontalRailGeometry(in: geometry))
             railNode.position = SCNVector3(0, 0.035, z)
             rootNode.addChildNode(railNode)
         }
 
         for x in [-0.39, 0.39] as [CGFloat] {
-            let railNode = SCNNode(geometry: style.verticalRailGeometry)
+            let railNode = SCNNode(geometry: style.verticalRailGeometry(in: geometry))
             railNode.position = SCNVector3(x, 0.035, 0)
             rootNode.addChildNode(railNode)
         }
@@ -159,7 +164,8 @@ enum BoardNodeFactory {
         from board: SquartBoard,
         spacing: CGFloat,
         xOffset: CGFloat,
-        zOffset: CGFloat
+        zOffset: CGFloat,
+        geometry: BoardGeometry
     ) {
         var consumedPositions: Set<BoardPosition> = []
 
@@ -173,7 +179,7 @@ enum BoardNodeFactory {
 
                 if isDominoOrigin(at: position, for: .horizontal, on: board, consumedPositions: consumedPositions) {
                     let nextPosition = position.offsetBy(rows: 0, columns: 1)
-                    let node = makeDominoNode(for: .horizontal, positions: [position, nextPosition])
+                    let node = makeDominoNode(for: .horizontal, positions: [position, nextPosition], geometry: geometry)
                     node.position = centerPosition(
                         between: position,
                         and: nextPosition,
@@ -198,7 +204,7 @@ enum BoardNodeFactory {
 
                 if isDominoOrigin(at: position, for: .vertical, on: board, consumedPositions: consumedPositions) {
                     let nextPosition = position.offsetBy(rows: 1, columns: 0)
-                    let node = makeDominoNode(for: .vertical, positions: [position, nextPosition])
+                    let node = makeDominoNode(for: .vertical, positions: [position, nextPosition], geometry: geometry)
                     node.position = centerPosition(
                         between: position,
                         and: nextPosition,
@@ -214,16 +220,16 @@ enum BoardNodeFactory {
         }
     }
 
-    private static func makeDominoNode(for player: Player, positions: [BoardPosition]) -> SCNNode {
-        let node = SCNNode(geometry: player == .horizontal ? BoardGeometry.horizontalDomino : BoardGeometry.verticalDomino)
+    private static func makeDominoNode(for player: Player, positions: [BoardPosition], geometry: BoardGeometry) -> SCNNode {
+        let node = SCNNode(geometry: player == .horizontal ? geometry.horizontalDomino : geometry.verticalDomino)
         node.name = dominoName(for: positions)
         node.castsShadow = true
-        node.addChildNode(makeDominoTopLine(for: player))
+        node.addChildNode(makeDominoTopLine(for: player, geometry: geometry))
         return node
     }
 
-    private static func makeDominoTopLine(for player: Player) -> SCNNode {
-        let node = SCNNode(geometry: player == .horizontal ? BoardGeometry.horizontalDominoTopLine : BoardGeometry.verticalDominoTopLine)
+    private static func makeDominoTopLine(for player: Player, geometry: BoardGeometry) -> SCNNode {
+        let node = SCNNode(geometry: player == .horizontal ? geometry.horizontalDominoTopLine : geometry.verticalDominoTopLine)
         node.position = SCNVector3(0, 0.098, 0)
         return node
     }
@@ -263,21 +269,21 @@ enum BoardNodeFactory {
         )
     }
 
-    private static func makeBlockerCap() -> SCNNode {
-        let node = SCNNode(geometry: BoardGeometry.blockerCap)
+    private static func makeBlockerCap(geometry: BoardGeometry) -> SCNNode {
+        let node = SCNNode(geometry: geometry.blockerCap)
         node.position = SCNVector3(0, 0.035, 0)
         return node
     }
 
     // MARK: - Base
 
-    private static func makeBaseNode(rows: Int, columns: Int) -> SCNNode {
+    private static func makeBaseNode(rows: Int, columns: Int, materials: SquartSceneMaterials) -> SCNNode {
         let rootNode = SCNNode()
         let width = CGFloat(columns) * tileSize + CGFloat(columns + 1) * gap
         let length = CGFloat(rows) * tileSize + CGFloat(rows + 1) * gap
 
         let base = SCNBox(width: width + 0.34, height: 0.12, length: length + 0.34, chamferRadius: 0.14)
-        base.materials = [SquartSceneMaterials.trayBase]
+        base.materials = [materials.trayBase]
 
         let baseNode = SCNNode(geometry: base)
         baseNode.position = SCNVector3(0, -0.17, 0)
@@ -285,7 +291,7 @@ enum BoardNodeFactory {
         rootNode.addChildNode(baseNode)
 
         let shadowPlate = SCNBox(width: width + 0.70, height: 0.025, length: length + 0.70, chamferRadius: 0.18)
-        shadowPlate.materials = [SquartSceneMaterials.shadowPlate]
+        shadowPlate.materials = [materials.shadowPlate]
 
         let shadowNode = SCNNode(geometry: shadowPlate)
         shadowNode.position = SCNVector3(0, -0.25, 0)
@@ -296,16 +302,16 @@ enum BoardNodeFactory {
 
     // MARK: - Geometry Lookup
 
-    private static func tileGeometry(for state: CellState) -> SCNGeometry {
+    private static func tileGeometry(for state: CellState, geometry: BoardGeometry) -> SCNGeometry {
         switch state {
         case .inactive:
-            return BoardGeometry.inactiveTile
+            return geometry.inactiveTile
         case .empty:
-            return BoardGeometry.emptyTile
+            return geometry.emptyTile
         case .occupied:
-            return BoardGeometry.occupiedTile
+            return geometry.occupiedTile
         case .outside:
-            return BoardGeometry.outsideTile
+            return geometry.outsideTile
         }
     }
 
@@ -383,127 +389,68 @@ private enum PreviewStyle {
     case human
     case ai
 
-    var fillGeometry: SCNGeometry {
+    func fillGeometry(in geometry: BoardGeometry) -> SCNGeometry {
         switch self {
         case .human:
-            return BoardGeometry.humanPreviewFill
+            return geometry.humanPreviewFill
         case .ai:
-            return BoardGeometry.aiPreviewFill
+            return geometry.aiPreviewFill
         }
     }
 
-    var horizontalRailGeometry: SCNGeometry {
+    func horizontalRailGeometry(in geometry: BoardGeometry) -> SCNGeometry {
         switch self {
         case .human:
-            return BoardGeometry.humanPreviewHorizontalRail
+            return geometry.humanPreviewHorizontalRail
         case .ai:
-            return BoardGeometry.aiPreviewHorizontalRail
+            return geometry.aiPreviewHorizontalRail
         }
     }
 
-    var verticalRailGeometry: SCNGeometry {
+    func verticalRailGeometry(in geometry: BoardGeometry) -> SCNGeometry {
         switch self {
         case .human:
-            return BoardGeometry.humanPreviewVerticalRail
+            return geometry.humanPreviewVerticalRail
         case .ai:
-            return BoardGeometry.aiPreviewVerticalRail
+            return geometry.aiPreviewVerticalRail
         }
     }
 }
 
-private enum BoardGeometry {
-    static let emptyTile = box(
-        width: 0.88,
-        height: 0.105,
-        length: 0.88,
-        chamferRadius: 0.055,
-        material: SquartSceneMaterials.emptyTile
-    )
+private struct BoardGeometry {
+    let emptyTile: SCNGeometry
+    let occupiedTile: SCNGeometry
+    let inactiveTile: SCNGeometry
+    let outsideTile: SCNGeometry
+    let humanPreviewFill: SCNGeometry
+    let humanPreviewHorizontalRail: SCNGeometry
+    let humanPreviewVerticalRail: SCNGeometry
+    let aiPreviewFill: SCNGeometry
+    let aiPreviewHorizontalRail: SCNGeometry
+    let aiPreviewVerticalRail: SCNGeometry
+    let horizontalDomino: SCNGeometry
+    let verticalDomino: SCNGeometry
+    let horizontalDominoTopLine: SCNGeometry
+    let verticalDominoTopLine: SCNGeometry
+    let blockerCap: SCNGeometry
 
-    static let occupiedTile = box(
-        width: 0.88,
-        height: 0.10,
-        length: 0.88,
-        chamferRadius: 0.055,
-        material: SquartSceneMaterials.emptyTile
-    )
-
-    static let inactiveTile = box(
-        width: 0.88,
-        height: 0.07,
-        length: 0.88,
-        chamferRadius: 0.045,
-        material: SquartSceneMaterials.inactiveBlocker
-    )
-
-    static let outsideTile = box(
-        width: 0.88,
-        height: 0.01,
-        length: 0.88,
-        chamferRadius: 0,
-        material: SquartSceneMaterials.outsideTile
-    )
-
-    static let humanPreviewFill = box(
-        width: 0.72,
-        height: 0.018,
-        length: 0.72,
-        chamferRadius: 0.04,
-        material: SquartSceneMaterials.humanPreviewFill
-    )
-
-    static let humanPreviewHorizontalRail = previewHorizontalRail(material: SquartSceneMaterials.humanPreviewEdge)
-    static let humanPreviewVerticalRail = previewVerticalRail(material: SquartSceneMaterials.humanPreviewEdge)
-    static let aiPreviewFill = box(
-        width: 0.72,
-        height: 0.018,
-        length: 0.72,
-        chamferRadius: 0.04,
-        material: SquartSceneMaterials.aiPreviewFill
-    )
-
-    static let aiPreviewHorizontalRail = previewHorizontalRail(material: SquartSceneMaterials.aiPreviewEdge)
-    static let aiPreviewVerticalRail = previewVerticalRail(material: SquartSceneMaterials.aiPreviewEdge)
-
-    static let horizontalDomino = box(
-        width: 1.68,
-        height: 0.20,
-        length: 0.80,
-        chamferRadius: 0.08,
-        material: SquartSceneMaterials.horizontalPiece
-    )
-
-    static let verticalDomino = box(
-        width: 0.80,
-        height: 0.20,
-        length: 1.68,
-        chamferRadius: 0.08,
-        material: SquartSceneMaterials.verticalPiece
-    )
-
-    static let horizontalDominoTopLine = box(
-        width: 1.12,
-        height: 0.012,
-        length: 0.050,
-        chamferRadius: 0.008,
-        material: SquartSceneMaterials.horizontalPieceAccent
-    )
-
-    static let verticalDominoTopLine = box(
-        width: 0.050,
-        height: 0.012,
-        length: 1.12,
-        chamferRadius: 0.008,
-        material: SquartSceneMaterials.verticalPieceAccent
-    )
-
-    static let blockerCap = box(
-        width: 0.58,
-        height: 0.035,
-        length: 0.58,
-        chamferRadius: 0.035,
-        material: SquartSceneMaterials.blockerCap
-    )
+    init(materials: SquartSceneMaterials) {
+        self.emptyTile = Self.box(width: 0.88, height: 0.105, length: 0.88, chamferRadius: 0.055, material: materials.emptyTile)
+        self.occupiedTile = Self.box(width: 0.88, height: 0.10, length: 0.88, chamferRadius: 0.055, material: materials.emptyTile)
+        self.inactiveTile = Self.box(width: 0.88, height: 0.07, length: 0.88, chamferRadius: 0.045, material: materials.inactiveBlocker)
+        self.outsideTile = Self.box(width: 0.88, height: 0.01, length: 0.88, chamferRadius: 0, material: materials.outsideTile)
+        self.humanPreviewFill = Self.box(width: 0.72, height: 0.018, length: 0.72, chamferRadius: 0.04, material: materials.humanPreviewFill)
+        self.humanPreviewHorizontalRail = Self.previewHorizontalRail(material: materials.humanPreviewEdge)
+        self.humanPreviewVerticalRail = Self.previewVerticalRail(material: materials.humanPreviewEdge)
+        self.aiPreviewFill = Self.box(width: 0.72, height: 0.018, length: 0.72, chamferRadius: 0.04, material: materials.aiPreviewFill)
+        self.aiPreviewHorizontalRail = Self.previewHorizontalRail(material: materials.aiPreviewEdge)
+        self.aiPreviewVerticalRail = Self.previewVerticalRail(material: materials.aiPreviewEdge)
+        self.horizontalDomino = Self.box(width: 1.68, height: 0.20, length: 0.80, chamferRadius: 0.08, material: materials.horizontalPiece)
+        self.verticalDomino = Self.box(width: 0.80, height: 0.20, length: 1.68, chamferRadius: 0.08, material: materials.verticalPiece)
+        self.horizontalDominoTopLine = Self.box(width: 1.12, height: 0.012, length: 0.050, chamferRadius: 0.008, material: materials.horizontalPieceAccent)
+        self.verticalDominoTopLine = Self.box(width: 0.050, height: 0.012, length: 1.12, chamferRadius: 0.008, material: materials.verticalPieceAccent)
+        self.blockerCap = Self.box(width: 0.58, height: 0.035, length: 0.58, chamferRadius: 0.035, material: materials.blockerCap)
+    }
 
     private static func previewHorizontalRail(material: SCNMaterial) -> SCNGeometry {
         box(width: 0.76, height: 0.026, length: 0.035, chamferRadius: 0.012, material: material)

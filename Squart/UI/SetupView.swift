@@ -72,6 +72,7 @@ struct SetupView: View {
     @State private var selectedBoardSize: BoardSizeOption = .ten
     @State private var selectedInactiveRatio: InactiveRatioOption = .standard
     @State private var isShowingRules = false
+    @Environment(\.squartPalette) private var palette
     private let configurationStore = GameConfigurationStore.shared
 
     let onStartMatch: (GameConfiguration) -> Void
@@ -92,6 +93,9 @@ struct SetupView: View {
                                     }
                                 }
                                 .pickerStyle(.segmented)
+                                .onChange(of: selectedGameMode) { _, _ in
+                                    Haptics.selection()
+                                }
                             }
 
                             if selectedGameMode == .playerVsAI {
@@ -102,8 +106,11 @@ struct SetupView: View {
                                         }
                                     }
                                     .pickerStyle(.segmented)
+                                    .onChange(of: selectedAIDifficulty) { _, _ in
+                                        Haptics.selection()
+                                    }
                                 }
-                                .transition(.opacity)
+                                .transition(.opacity.combined(with: .scale(scale: 0.985, anchor: .top)))
                             }
                         }
                     }
@@ -117,6 +124,9 @@ struct SetupView: View {
                                     }
                                 }
                                 .pickerStyle(.segmented)
+                                .onChange(of: selectedBoardShape) { _, _ in
+                                    Haptics.selection()
+                                }
                             }
 
                             setupPicker("Size") {
@@ -126,6 +136,9 @@ struct SetupView: View {
                                     }
                                 }
                                 .pickerStyle(.segmented)
+                                .onChange(of: selectedBoardSize) { _, _ in
+                                    Haptics.selection()
+                                }
                             }
 
                             setupPicker("Inactive") {
@@ -135,11 +148,14 @@ struct SetupView: View {
                                     }
                                 }
                                 .pickerStyle(.segmented)
+                                .onChange(of: selectedInactiveRatio) { _, _ in
+                                    Haptics.selection()
+                                }
                             }
                         }
                     }
                 }
-                .tint(SquartTheme.Colors.cappuccino)
+                .tint(palette.accent)
 
                 Button {
                     Haptics.selection()
@@ -147,16 +163,16 @@ struct SetupView: View {
                 } label: {
                     Label("How to Play", systemImage: "questionmark.circle")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(SquartTheme.Colors.cappuccino)
+                        .foregroundStyle(palette.accent)
                         .padding(.horizontal, 18)
                         .padding(.vertical, 10)
                         .background(
                             Capsule()
-                                .stroke(SquartTheme.Colors.cappuccino.opacity(0.32), lineWidth: 1)
-                                .background(Capsule().fill(SquartTheme.Colors.subtlePanelGraphite.opacity(0.78)))
+                                .stroke(palette.accent.opacity(0.32), lineWidth: 1)
+                                .background(Capsule().fill(palette.subtlePanel.opacity(0.78)))
                         )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.985, pressedOpacity: 0.88))
 
                 HStack(spacing: 12) {
                     Button("Back", action: onBack)
@@ -186,6 +202,11 @@ struct SetupView: View {
         .onAppear {
             apply(configurationStore.load())
         }
+        .animation(SquartTheme.microInteractionAnimation, value: selectedGameMode)
+        .animation(SquartTheme.microInteractionAnimation, value: selectedAIDifficulty)
+        .animation(SquartTheme.microInteractionAnimation, value: selectedBoardShape)
+        .animation(SquartTheme.microInteractionAnimation, value: selectedBoardSize)
+        .animation(SquartTheme.microInteractionAnimation, value: selectedInactiveRatio)
     }
 
     private var selectedConfiguration: GameConfiguration {
@@ -202,11 +223,11 @@ struct SetupView: View {
         VStack(spacing: 8) {
             Text("Match Setup")
                 .font(SquartTheme.titleFont(size: 34))
-                .foregroundStyle(SquartTheme.Colors.primaryText)
+                .foregroundStyle(palette.primaryText)
 
             Text("Shape the board before the first denial.")
                 .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(SquartTheme.Colors.mutedText)
+                .foregroundStyle(palette.mutedText)
                 .multilineTextAlignment(.center)
         }
     }
@@ -218,7 +239,7 @@ struct SetupView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title.uppercased())
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(SquartTheme.Colors.cappuccino.opacity(0.86))
+                .foregroundStyle(palette.accent.opacity(0.86))
 
             content()
         }
@@ -235,5 +256,5 @@ struct SetupView: View {
 
 #Preview {
     SetupView { _ in } onBack: {}
-        .background(Color.black)
+        .background(SquartVisualTheme.defaultTheme.palette.backgroundBottom)
 }

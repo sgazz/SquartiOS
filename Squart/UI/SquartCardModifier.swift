@@ -1,19 +1,21 @@
 import SwiftUI
 
 struct SquartCardModifier: ViewModifier {
+    @Environment(\.squartPalette) private var palette
+
     var cornerRadius: CGFloat = SquartTheme.Radius.small
-    var fill: Color = SquartTheme.Colors.subtlePanelGraphite
-    var stroke: Color = SquartTheme.Colors.subtleBorderGraphite
+    var fill: Color?
+    var stroke: Color?
 
     func body(content: Content) -> some View {
         content
             .background(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(fill)
+                    .fill(fill ?? palette.subtlePanel)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(stroke, lineWidth: 1)
+                    .stroke(stroke ?? palette.subtleBorder, lineWidth: 1)
             )
     }
 }
@@ -21,8 +23,8 @@ struct SquartCardModifier: ViewModifier {
 extension View {
     func squartCard(
         cornerRadius: CGFloat = SquartTheme.Radius.small,
-        fill: Color = SquartTheme.Colors.subtlePanelGraphite,
-        stroke: Color = SquartTheme.Colors.subtleBorderGraphite
+        fill: Color? = nil,
+        stroke: Color? = nil
     ) -> some View {
         modifier(
             SquartCardModifier(

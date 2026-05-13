@@ -3,6 +3,8 @@ import SceneKit
 import UIKit
 
 struct SquartSceneView: UIViewRepresentable {
+    @AppStorage(SquartThemeStore.selectedThemeIDKey) private var selectedThemeID = SquartVisualTheme.defaultTheme.id
+
     let board: SquartBoard
     let previewPositions: Set<BoardPosition>
     let aiPreviewPositions: Set<BoardPosition>
@@ -33,7 +35,8 @@ struct SquartSceneView: UIViewRepresentable {
             aiPreviewPositions: aiPreviewPositions,
             lastMovePositions: lastMovePositions,
             moveAnimationToken: moveAnimationToken,
-            viewportSize: sceneView.bounds.size
+            viewportSize: sceneView.bounds.size,
+            visualTheme: visualTheme
         )
         return sceneView
     }
@@ -47,8 +50,13 @@ struct SquartSceneView: UIViewRepresentable {
             aiPreviewPositions: aiPreviewPositions,
             lastMovePositions: lastMovePositions,
             moveAnimationToken: moveAnimationToken,
-            viewportSize: sceneView.bounds.size
+            viewportSize: sceneView.bounds.size,
+            visualTheme: visualTheme
         )
+    }
+
+    private var visualTheme: SquartVisualTheme {
+        SquartVisualTheme(rawValue: selectedThemeID) ?? .defaultTheme
     }
 
     final class Coordinator: NSObject, UIGestureRecognizerDelegate {

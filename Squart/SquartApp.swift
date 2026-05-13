@@ -11,7 +11,9 @@ import SwiftUI
 struct SquartApp: App {
     var body: some Scene {
         WindowGroup {
-            RootView()
+            LaunchTransitionView {
+                RootView()
+            }
         }
     }
 }

@@ -2,7 +2,7 @@ import SwiftUI
 
 struct GameView: View {
     @State private var game: SquartGame
-    @State private var boardMode: GameBoardMode = .debug2D
+    @State private var boardMode: GameBoardMode = .classic
     @State private var previewPosition: BoardPosition?
     @State private var resetCameraToken = 0
     @State private var isAITurnPending = false
@@ -15,17 +15,30 @@ struct GameView: View {
     @State private var horizontalMoveCount = 0
     @State private var verticalMoveCount = 0
     @State private var aiPreviewPositions: Set<BoardPosition> = []
+    @State private var isDailyChallengeCompleted = false
 
     let configuration: GameConfiguration
+    let dailyChallenge: DailyChallenge?
     let onChangeSetup: () -> Void
+    let onDailyChallengeCompleted: () -> Void
     private let ai = SquartAI()
+    private let dailyCompletionStore: DailyChallengeHistoryStore
 
     init(
         configuration: GameConfiguration = GameConfiguration(),
-        onChangeSetup: @escaping () -> Void = {}
+        dailyChallenge: DailyChallenge? = nil,
+        dailyCompletionStore: DailyChallengeHistoryStore = .shared,
+        onChangeSetup: @escaping () -> Void = {},
+        onDailyChallengeCompleted: @escaping () -> Void = {}
     ) {
         self.configuration = configuration
+        self.dailyChallenge = dailyChallenge
+        self.dailyCompletionStore = dailyCompletionStore
         self.onChangeSetup = onChangeSetup
+        self.onDailyChallengeCompleted = onDailyChallengeCompleted
+        self._isDailyChallengeCompleted = State(
+            initialValue: dailyChallenge.map { dailyCompletionStore.isCompleted(dateKey: $0.dateKey) } ?? false
+        )
         self._game = State(initialValue: Self.newGame(configuration: configuration))
     }
 
@@ -48,6 +61,14 @@ struct GameView: View {
                     onChangeSetup: changeSetup
                 )
 
+                if let dailyChallenge {
+                    DailyChallengeBanner(
+                        challenge: dailyChallenge,
+                        isCompleted: isDailyChallengeCompleted
+                    )
+                        .padding(.horizontal, 12)
+                }
+
                 GeometryReader { proxy in
                     boardContent(in: proxy.size)
                 }
@@ -64,6 +85,7 @@ struct GameView: View {
                 didTriggerGameOverHaptic = true
                 Haptics.softImpact()
                 SoundEffects.playGameOver()
+                recordDailyCompletionIfNeeded(winner: game.winner)
             }
 
             if let winner = game.winner {
@@ -82,10 +104,10 @@ struct GameView: View {
     @ViewBuilder
     private func boardContent(in size: CGSize) -> some View {
         switch boardMode {
-        case .debug2D:
+        case .classic:
             let side = max(0, min(size.width - 28, size.height))
 
-            BoardDebugView(
+            ClassicBoardView(
                 board: game.board,
                 currentPlayer: game.currentPlayer,
                 isFinished: game.isFinished
@@ -96,7 +118,7 @@ struct GameView: View {
             .frame(width: side, height: side)
             .frame(width: size.width, height: size.height, alignment: .top)
 
-        case .preview3D:
+        case .board3D:
             SquartSceneView(
                 board: game.board,
                 previewPositions: previewPositions,
@@ -250,6 +272,9 @@ struct GameView: View {
         moveCount = 0
         horizontalMoveCount = 0
         verticalMoveCount = 0
+        if let dailyChallenge {
+            isDailyChallengeCompleted = dailyCompletionStore.isCompleted(dateKey: dailyChallenge.dateKey)
+        }
     }
 
     private var canHumanMove: Bool {
@@ -293,7 +318,7 @@ struct GameView: View {
                 on: game.board,
                 difficulty: configuration.aiDifficulty
             ) {
-                if boardMode == .preview3D {
+                if boardMode == .board3D {
                     aiPreviewPositions = Set(move.occupiedPositions)
                     try? await Task.sleep(nanoseconds: 250_000_000)
 
@@ -387,6 +412,21 @@ struct GameView: View {
             board: BoardGenerator.board(for: configuration)
         )
     }
+
+    private func recordDailyCompletionIfNeeded(winner: Player?) {
+        guard
+            let dailyChallenge,
+            winner == .horizontal,
+            !isDailyChallengeCompleted
+        else {
+            return
+        }
+
+        if dailyCompletionStore.markCompleted(dateKey: dailyChallenge.dateKey) {
+            isDailyChallengeCompleted = true
+            onDailyChallengeCompleted()
+        }
+    }
 }
 
 private extension GameView {
@@ -443,16 +483,39 @@ private extension AIDifficulty {
 }
 
 private struct GameBackground: View {
+    @Environment(\.squartPalette) private var palette
+
     var body: some View {
-        LinearGradient(
-            colors: [
-                SquartTheme.Colors.backgroundTop,
-                SquartTheme.Colors.backgroundMid,
-                SquartTheme.Colors.backgroundBottom
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+        palette.appBackground
+    }
+}
+
+private struct DailyChallengeBanner: View {
+    @Environment(\.squartPalette) private var palette
+    let challenge: DailyChallenge
+    let isCompleted: Bool
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: isCompleted ? "checkmark.circle.fill" : "calendar")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(palette.accent)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(isCompleted ? "Completed Today" : challenge.title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(palette.strongText)
+
+                Text(isCompleted ? "Daily win recorded locally" : challenge.subtitle)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(palette.mutedText)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .squartCard(cornerRadius: 14, fill: palette.panel.opacity(0.72), stroke: palette.border)
     }
 }
 

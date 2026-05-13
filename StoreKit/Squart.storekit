@@ -1,0 +1,34 @@
+{
+  "identifier": "7E6E0A18-0D81-4C36-97C0-3A06D4D8F481",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "4A41B364-EB55-4C21-8E12-DA3F8B119E24",
+      "localizations": [
+        {
+          "description": "Unlock the Premium Theme Pack and support Squart development.",
+          "displayName": "Squart Supporter",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "squart.supporter",
+      "referenceName": "Squart Supporter",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {
+    "_applicationInternalID": "0",
+    "_developerTeamID": "83F7KY8L5Y",
+    "_lastSynchronizedDate": 0,
+    "_locale": "en_US",
+    "_storefront": "USA",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 4,
+    "minor": 0
+  }
+}

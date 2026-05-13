@@ -1,6 +1,10 @@
 import SwiftUI
 
 enum SquartTheme {
+    static let themeTransitionDuration: Double = 0.36
+    static let themeTransitionAnimation = Animation.easeInOut(duration: themeTransitionDuration)
+    static let microInteractionAnimation = Animation.spring(response: 0.22, dampingFraction: 0.86)
+
     enum Colors {
         static let backgroundTop = Color(red: 0.07, green: 0.07, blue: 0.07)
         static let backgroundMid = Color(red: 0.12, green: 0.11, blue: 0.10)
@@ -47,5 +51,16 @@ enum SquartTheme {
 
     static func titleFont(size: CGFloat) -> Font {
         .system(size: size, weight: .semibold, design: .serif)
+    }
+}
+
+private struct SquartPaletteKey: EnvironmentKey {
+    static let defaultValue = SquartVisualTheme.defaultTheme.palette
+}
+
+extension EnvironmentValues {
+    var squartPalette: SquartThemePalette {
+        get { self[SquartPaletteKey.self] }
+        set { self[SquartPaletteKey.self] = newValue }
     }
 }

@@ -190,6 +190,70 @@ final class SquartTests: XCTestCase {
         XCTAssertTrue(board.hasValidMove(for: .vertical))
     }
 
+    func testDailyChallengeIsStableForSameDay() {
+        let generator = DailyChallengeGenerator()
+        let date = fixedDate(year: 2026, month: 5, day: 13)
+
+        let firstChallenge = generator.challenge(for: date)
+        let secondChallenge = generator.challenge(for: date)
+
+        XCTAssertEqual(firstChallenge, secondChallenge)
+        XCTAssertEqual(firstChallenge.dateKey, "2026-05-13")
+        XCTAssertTrue(firstChallenge.configuration.mode == .playerVsAI)
+    }
+
+    func testDailyChallengeChangesAcrossDays() {
+        let generator = DailyChallengeGenerator()
+        let firstChallenge = generator.challenge(for: fixedDate(year: 2026, month: 5, day: 13))
+        let secondChallenge = generator.challenge(for: fixedDate(year: 2026, month: 5, day: 14))
+
+        XCTAssertNotEqual(firstChallenge.seed, secondChallenge.seed)
+        XCTAssertNotEqual(firstChallenge.dateKey, secondChallenge.dateKey)
+    }
+
+    func testDailyChallengeBoardGenerationUsesSeed() {
+        let generator = DailyChallengeGenerator()
+        let challenge = generator.challenge(for: fixedDate(year: 2026, month: 5, day: 13))
+
+        let firstBoard = BoardGenerator.board(for: challenge.configuration)
+        let secondBoard = BoardGenerator.board(for: challenge.configuration)
+
+        XCTAssertEqual(firstBoard, secondBoard)
+        XCTAssertTrue(firstBoard.hasValidMove(for: .horizontal))
+        XCTAssertTrue(firstBoard.hasValidMove(for: .vertical))
+    }
+
+    func testDailyChallengeHistoryPersistsCompletion() throws {
+        let suiteName = "SquartTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        let store = DailyChallengeHistoryStore(defaults: defaults)
+
+        XCTAssertFalse(store.isCompleted(dateKey: "2026-05-13"))
+        XCTAssertTrue(store.markCompleted(dateKey: "2026-05-13", completedAt: fixedDate(year: 2026, month: 5, day: 13)))
+
+        let restoredStore = DailyChallengeHistoryStore(defaults: defaults)
+        XCTAssertTrue(restoredStore.isCompleted(dateKey: "2026-05-13"))
+        XCTAssertEqual(restoredStore.completedDateKeys(), ["2026-05-13"])
+    }
+
+    func testDailyChallengeHistoryPreventsDuplicateCompletions() throws {
+        let suiteName = "SquartTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        let store = DailyChallengeHistoryStore(defaults: defaults)
+
+        XCTAssertTrue(store.markCompleted(dateKey: "2026-05-13", completedAt: fixedDate(year: 2026, month: 5, day: 13)))
+        XCTAssertFalse(store.markCompleted(dateKey: "2026-05-13", completedAt: fixedDate(year: 2026, month: 5, day: 14)))
+        XCTAssertEqual(store.completions().count, 1)
+    }
+
     func testGameConfigurationStoreRoundTripsSavedConfiguration() throws {
         let suiteName = "SquartTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
@@ -259,10 +323,119 @@ final class SquartTests: XCTestCase {
         XCTAssertTrue(store.load().isHapticsEnabled)
         XCTAssertFalse(store.load().isSoundEffectsEnabled)
     }
+
+    func testThemeStoreDefaultsToCappuccino() throws {
+        let suiteName = "SquartTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        let store = SquartThemeStore(defaults: defaults)
+
+        XCTAssertEqual(store.loadSelectedTheme(), .cappuccino)
+    }
+
+    func testThemeStoreRestoresSavedPremiumThemeWhenUnlocked() throws {
+        let suiteName = "SquartTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        let store = SquartThemeStore(defaults: defaults)
+        let access = ThemeAccess(purchasedProductIDs: [StoreProduct.supporter.id])
+
+        store.saveSelectedTheme(.forest)
+
+        XCTAssertEqual(store.loadSelectedTheme(access: access), .forest)
+    }
+
+    func testThemeStoreFallsBackWhenPremiumThemeIsLocked() throws {
+        let suiteName = "SquartTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        let store = SquartThemeStore(defaults: defaults)
+
+        store.saveSelectedTheme(.forest)
+
+        XCTAssertEqual(store.loadSelectedTheme(access: .free), .cappuccino)
+    }
+
+    func testThemeStoreFallsBackForInvalidStoredTheme() throws {
+        let suiteName = "SquartTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        defaults.set("invalid-theme", forKey: "squart.theme.selectedThemeID")
+
+        let store = SquartThemeStore(defaults: defaults)
+
+        XCTAssertEqual(store.loadSelectedTheme(), .cappuccino)
+    }
+
+    func testThemePremiumFlags() {
+        XCTAssertFalse(SquartVisualTheme.cappuccino.isPremium)
+        XCTAssertTrue(SquartVisualTheme.obsidian.isPremium)
+        XCTAssertTrue(SquartVisualTheme.ivory.isPremium)
+        XCTAssertTrue(SquartVisualTheme.forest.isPremium)
+        XCTAssertTrue(SquartVisualTheme.bronzeNight.isPremium)
+    }
+
+    func testThemeAccessRequiresSupporterForPremiumThemes() {
+        XCTAssertTrue(ThemeAccess.free.canUse(.cappuccino))
+        XCTAssertFalse(ThemeAccess.free.canUse(.obsidian))
+
+        let supporterAccess = ThemeAccess(purchasedProductIDs: [StoreProduct.supporter.id])
+
+        XCTAssertTrue(supporterAccess.canUse(.obsidian))
+        XCTAssertTrue(supporterAccess.canUse(.ivory))
+        XCTAssertTrue(supporterAccess.canUse(.forest))
+        XCTAssertTrue(supporterAccess.canUse(.bronzeNight))
+    }
+
+    func testThemeAccessAppliesToPremiumAppIcons() {
+        XCTAssertTrue(ThemeAccess.free.canUseAppIcon(for: .cappuccino))
+        XCTAssertFalse(ThemeAccess.free.canUseAppIcon(for: .obsidian))
+
+        let supporterAccess = ThemeAccess(purchasedProductIDs: [StoreProduct.supporter.id])
+
+        XCTAssertTrue(supporterAccess.canUseAppIcon(for: .obsidian))
+        XCTAssertTrue(supporterAccess.canUseAppIcon(for: .ivory))
+        XCTAssertTrue(supporterAccess.canUseAppIcon(for: .forest))
+        XCTAssertTrue(supporterAccess.canUseAppIcon(for: .bronzeNight))
+    }
+
+    func testAppIconNameMappingMatchesThemes() {
+        XCTAssertNil(AppIconManager.alternateIconName(for: .cappuccino))
+        XCTAssertEqual(AppIconManager.alternateIconName(for: .obsidian), "Obsidian")
+        XCTAssertEqual(AppIconManager.alternateIconName(for: .ivory), "Ivory")
+        XCTAssertEqual(AppIconManager.alternateIconName(for: .forest), "Forest")
+        XCTAssertEqual(AppIconManager.alternateIconName(for: .bronzeNight), "BronzeNight")
+
+        XCTAssertEqual(AppIconManager.theme(forAlternateIconName: nil), .cappuccino)
+        XCTAssertEqual(AppIconManager.theme(forAlternateIconName: "Obsidian"), .obsidian)
+        XCTAssertEqual(AppIconManager.theme(forAlternateIconName: "Ivory"), .ivory)
+        XCTAssertEqual(AppIconManager.theme(forAlternateIconName: "Forest"), .forest)
+        XCTAssertEqual(AppIconManager.theme(forAlternateIconName: "BronzeNight"), .bronzeNight)
+        XCTAssertNil(AppIconManager.theme(forAlternateIconName: "Unknown"))
+    }
 }
 
 private extension SquartGame {
     func cellState(at position: BoardPosition) -> CellState? {
         board.cellState(at: position)
     }
+}
+
+private func fixedDate(year: Int, month: Int, day: Int) -> Date {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .current
+
+    return calendar.date(from: DateComponents(year: year, month: month, day: day)) ?? Date(timeIntervalSince1970: 0)
 }

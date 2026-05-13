@@ -1,6 +1,8 @@
 import SwiftUI
 
-struct BoardDebugView: View {
+struct ClassicBoardView: View {
+    @Environment(\.squartPalette) private var palette
+
     let board: SquartBoard
     let currentPlayer: Player
     let isFinished: Bool
@@ -18,7 +20,7 @@ struct BoardDebugView: View {
                     HStack(spacing: spacing) {
                         ForEach(0..<board.columns, id: \.self) { column in
                             let position = BoardPosition(row: row, column: column)
-                            CellDebugView(
+                            ClassicCellView(
                                 state: board.cellState(at: position) ?? .inactive,
                                 isValidOrigin: board.isValidMove(Move(player: currentPlayer, origin: position))
                             ) {
@@ -34,10 +36,10 @@ struct BoardDebugView: View {
             .padding(10)
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color.white.opacity(0.045))
+                    .fill(palette.subtlePanel)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            .stroke(palette.subtleBorder, lineWidth: 1)
                     )
             )
             .frame(width: side, height: side)
@@ -71,7 +73,7 @@ struct BoardDebugView: View {
 }
 
 #Preview {
-    BoardDebugView(
+    ClassicBoardView(
         board: SquartBoard(
             rows: 10,
             columns: 10,
@@ -81,5 +83,5 @@ struct BoardDebugView: View {
         isFinished: false
     ) { _ in }
     .padding()
-    .background(Color.black)
+    .background(SquartVisualTheme.defaultTheme.palette.backgroundBottom)
 }

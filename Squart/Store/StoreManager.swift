@@ -4,6 +4,8 @@ import StoreKit
 
 @MainActor
 final class StoreManager: ObservableObject {
+    static let shared = StoreManager()
+
     @Published private(set) var products: [Product] = []
     @Published private(set) var purchasedProductIDs: Set<String> = []
     @Published private(set) var isLoading = false
@@ -96,8 +98,12 @@ final class StoreManager: ObservableObject {
     }
 
     private func observeTransactionUpdates() -> Task<Void, Never> {
-        Task {
+        Task { [weak self] in
             for await result in Transaction.updates {
+                guard let self else {
+                    return
+                }
+
                 do {
                     try await handle(result)
                 } catch {

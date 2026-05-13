@@ -1,6 +1,8 @@
 import SwiftUI
 
-struct CellDebugView: View {
+struct ClassicCellView: View {
+    @Environment(\.squartPalette) private var palette
+
     let state: CellState
     let isValidOrigin: Bool
     let onTap: () -> Void
@@ -16,7 +18,7 @@ struct CellDebugView: View {
                 )
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.94, pressedOpacity: 0.90))
     }
 
     @ViewBuilder
@@ -25,14 +27,14 @@ struct CellDebugView: View {
         case .occupied(.horizontal):
             GeometryReader { proxy in
                 Capsule()
-                    .fill(Color(red: 0.96, green: 0.82, blue: 0.62).opacity(0.86))
+                    .fill(palette.accent.opacity(0.86))
                     .frame(width: proxy.size.width * 0.68, height: max(4, proxy.size.height * 0.18))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         case .occupied(.vertical):
             GeometryReader { proxy in
                 Capsule()
-                    .fill(Color(red: 0.58, green: 0.68, blue: 0.72).opacity(0.9))
+                    .fill(palette.coolAccent.opacity(0.9))
                     .frame(width: max(4, proxy.size.width * 0.18), height: proxy.size.height * 0.68)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -46,13 +48,13 @@ struct CellDebugView: View {
         case .outside:
             return Color.clear
         case .inactive:
-            return Color(red: 0.18, green: 0.14, blue: 0.10).opacity(0.44)
+            return palette.secondaryAccent.opacity(0.34)
         case .empty:
-            return Color.white.opacity(0.09)
+            return palette.panel
         case .occupied(.horizontal):
-            return Color(red: 0.42, green: 0.31, blue: 0.22).opacity(0.92)
+            return palette.secondaryAccent.opacity(0.92)
         case .occupied(.vertical):
-            return Color(red: 0.20, green: 0.27, blue: 0.29).opacity(0.94)
+            return palette.coolAccent.opacity(0.38)
         }
     }
 
@@ -61,26 +63,26 @@ struct CellDebugView: View {
         case .outside:
             return Color.clear
         case .inactive:
-            return Color(red: 0.78, green: 0.66, blue: 0.52).opacity(0.18)
+            return palette.accent.opacity(0.18)
         case .empty:
-            return isValidOrigin ? Color(red: 0.78, green: 0.66, blue: 0.52).opacity(0.78) : Color.white.opacity(0.10)
+            return isValidOrigin ? palette.accent.opacity(0.78) : palette.subtleBorder
         case .occupied(.horizontal):
-            return Color(red: 0.78, green: 0.66, blue: 0.52).opacity(0.42)
+            return palette.accent.opacity(0.42)
         case .occupied(.vertical):
-            return Color(red: 0.58, green: 0.68, blue: 0.72).opacity(0.40)
+            return palette.coolAccent.opacity(0.40)
         }
     }
 }
 
 #Preview {
     HStack {
-        CellDebugView(state: .outside, isValidOrigin: false) {}
-        CellDebugView(state: .empty, isValidOrigin: true) {}
-        CellDebugView(state: .inactive, isValidOrigin: false) {}
-        CellDebugView(state: .occupied(.horizontal), isValidOrigin: false) {}
-        CellDebugView(state: .occupied(.vertical), isValidOrigin: false) {}
+        ClassicCellView(state: .outside, isValidOrigin: false) {}
+        ClassicCellView(state: .empty, isValidOrigin: true) {}
+        ClassicCellView(state: .inactive, isValidOrigin: false) {}
+        ClassicCellView(state: .occupied(.horizontal), isValidOrigin: false) {}
+        ClassicCellView(state: .occupied(.vertical), isValidOrigin: false) {}
     }
     .frame(height: 48)
     .padding()
-    .background(Color.black)
+    .background(SquartVisualTheme.defaultTheme.palette.backgroundBottom)
 }
