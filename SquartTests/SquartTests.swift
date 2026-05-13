@@ -200,6 +200,8 @@ final class SquartTests: XCTestCase {
         XCTAssertEqual(firstChallenge, secondChallenge)
         XCTAssertEqual(firstChallenge.dateKey, "2026-05-13")
         XCTAssertTrue(firstChallenge.configuration.mode == .playerVsAI)
+        XCTAssertEqual(firstChallenge.configuration.humanPlayer, secondChallenge.configuration.humanPlayer)
+        XCTAssertEqual(firstChallenge.configuration.humanTurnOrder, secondChallenge.configuration.humanTurnOrder)
     }
 
     func testDailyChallengeChangesAcrossDays() {
@@ -209,6 +211,27 @@ final class SquartTests: XCTestCase {
 
         XCTAssertNotEqual(firstChallenge.seed, secondChallenge.seed)
         XCTAssertNotEqual(firstChallenge.dateKey, secondChallenge.dateKey)
+        XCTAssertNotEqual(firstChallenge.configuration, secondChallenge.configuration)
+    }
+
+    func testDailyChallengeIncludesRoleAndTurnOrder() {
+        let generator = DailyChallengeGenerator()
+        let challenge = generator.challenge(for: fixedDate(year: 2026, month: 5, day: 13))
+
+        XCTAssertEqual(challenge.configuration.mode, .playerVsAI)
+        XCTAssertTrue(Player.allCases.contains(challenge.configuration.humanPlayer))
+        XCTAssertTrue(TurnOrder.allCases.contains(challenge.configuration.humanTurnOrder))
+        XCTAssertEqual(challenge.configuration.aiPlayer, challenge.configuration.humanPlayer.opponent)
+    }
+
+    func testDailyChallengeHumanSecondStartsWithAIPlayer() {
+        let configuration = GameConfiguration(
+            mode: .playerVsAI,
+            humanPlayer: .vertical,
+            humanTurnOrder: .second
+        )
+
+        XCTAssertEqual(configuration.startingPlayer, configuration.aiPlayer)
     }
 
     func testDailyChallengeBoardGenerationUsesSeed() {
@@ -265,6 +288,8 @@ final class SquartTests: XCTestCase {
         let configuration = GameConfiguration(
             mode: .playerVsAI,
             aiDifficulty: .hard,
+            humanPlayer: .vertical,
+            humanTurnOrder: .second,
             boardShape: .triangle(size: 12),
             boardSize: 12,
             inactiveCellRatio: 0.25
@@ -291,6 +316,90 @@ final class SquartTests: XCTestCase {
         let store = GameConfigurationStore(defaults: defaults)
 
         XCTAssertEqual(store.load(), .standard)
+    }
+
+    func testGameConfigurationStoreFallsBackToDefaultRoleAndTurnOrderWhenInvalid() throws {
+        let suiteName = "SquartTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer {
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+
+        defaults.set("playerVsAI", forKey: "squart.gameConfiguration.mode")
+        defaults.set("medium", forKey: "squart.gameConfiguration.aiDifficulty")
+        defaults.set("invalidRole", forKey: "squart.gameConfiguration.humanPlayer")
+        defaults.set("invalidTurn", forKey: "squart.gameConfiguration.humanTurnOrder")
+        defaults.set(10, forKey: "squart.gameConfiguration.boardSize")
+        defaults.set(0.18, forKey: "squart.gameConfiguration.inactiveCellRatio")
+        defaults.set("square", forKey: "squart.gameConfiguration.boardShape")
+
+        let store = GameConfigurationStore(defaults: defaults)
+        let configuration = store.load()
+
+        XCTAssertEqual(configuration.mode, .playerVsAI)
+        XCTAssertEqual(configuration.aiDifficulty, .medium)
+        XCTAssertEqual(configuration.humanPlayer, .horizontal)
+        XCTAssertEqual(configuration.humanTurnOrder, .first)
+    }
+
+    func testGameConfigurationDerivesAIPlayerFromHumanHorizontal() {
+        let configuration = GameConfiguration(
+            mode: .playerVsAI,
+            humanPlayer: .horizontal,
+            humanTurnOrder: .first
+        )
+
+        XCTAssertEqual(configuration.aiPlayer, .vertical)
+    }
+
+    func testGameConfigurationDerivesAIPlayerFromHumanVertical() {
+        let configuration = GameConfiguration(
+            mode: .playerVsAI,
+            humanPlayer: .vertical,
+            humanTurnOrder: .first
+        )
+
+        XCTAssertEqual(configuration.aiPlayer, .horizontal)
+    }
+
+    func testGameConfigurationStartingPlayerHumanHorizontalFirst() {
+        let configuration = GameConfiguration(
+            mode: .playerVsAI,
+            humanPlayer: .horizontal,
+            humanTurnOrder: .first
+        )
+
+        XCTAssertEqual(configuration.startingPlayer, .horizontal)
+    }
+
+    func testGameConfigurationStartingPlayerHumanVerticalFirst() {
+        let configuration = GameConfiguration(
+            mode: .playerVsAI,
+            humanPlayer: .vertical,
+            humanTurnOrder: .first
+        )
+
+        XCTAssertEqual(configuration.startingPlayer, .vertical)
+    }
+
+    func testGameConfigurationStartingPlayerHumanHorizontalSecond() {
+        let configuration = GameConfiguration(
+            mode: .playerVsAI,
+            humanPlayer: .horizontal,
+            humanTurnOrder: .second
+        )
+
+        XCTAssertEqual(configuration.startingPlayer, .vertical)
+    }
+
+    func testGameConfigurationStartingPlayerHumanVerticalSecond() {
+        let configuration = GameConfiguration(
+            mode: .playerVsAI,
+            humanPlayer: .vertical,
+            humanTurnOrder: .second
+        )
+
+        XCTAssertEqual(configuration.startingPlayer, .horizontal)
     }
 
     func testAppSettingsStoreDefaultsHapticsOn() throws {

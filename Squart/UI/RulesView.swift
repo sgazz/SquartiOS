@@ -28,7 +28,8 @@ struct RulesView: View {
                             items: [
                                 "Blocker cells cannot be used.",
                                 "Diamond shape removes corners from the board.",
-                                "Inactive cells are tactical blockers."
+                                "Inactive cells are tactical blockers.",
+                                "In Player vs AI, you can choose Horizontal or Vertical, and play first or second."
                             ]
                         )
 

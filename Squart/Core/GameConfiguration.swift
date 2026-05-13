@@ -3,6 +3,8 @@ nonisolated struct GameConfiguration: Equatable, Sendable {
 
     let mode: GameMode
     let aiDifficulty: AIDifficulty
+    let humanPlayer: Player
+    let humanTurnOrder: TurnOrder
     let boardShape: BoardShape
     let boardSize: Int
     let inactiveCellRatio: Double
@@ -11,6 +13,8 @@ nonisolated struct GameConfiguration: Equatable, Sendable {
     init(
         mode: GameMode = .pvp,
         aiDifficulty: AIDifficulty = .easy,
+        humanPlayer: Player = .horizontal,
+        humanTurnOrder: TurnOrder = .first,
         boardShape: BoardShape? = nil,
         boardSize: Int = 10,
         inactiveCellRatio: Double = 0.18,
@@ -20,9 +24,24 @@ nonisolated struct GameConfiguration: Equatable, Sendable {
 
         self.mode = mode
         self.aiDifficulty = aiDifficulty
+        self.humanPlayer = humanPlayer
+        self.humanTurnOrder = humanTurnOrder
         self.boardSize = sanitizedBoardSize
         self.boardShape = boardShape ?? .square(size: sanitizedBoardSize)
         self.inactiveCellRatio = min(max(inactiveCellRatio, 0), 0.75)
         self.boardSeed = boardSeed
+    }
+
+    var aiPlayer: Player {
+        humanPlayer.opponent
+    }
+
+    var startingPlayer: Player {
+        switch humanTurnOrder {
+        case .first:
+            return humanPlayer
+        case .second:
+            return aiPlayer
+        }
     }
 }

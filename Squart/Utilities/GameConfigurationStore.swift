@@ -12,6 +12,8 @@ struct GameConfigurationStore {
     func save(_ configuration: GameConfiguration) {
         defaults.set(modeKey(for: configuration.mode), forKey: Key.mode)
         defaults.set(aiDifficultyKey(for: configuration.aiDifficulty), forKey: Key.aiDifficulty)
+        defaults.set(playerKey(for: configuration.humanPlayer), forKey: Key.humanPlayer)
+        defaults.set(turnOrderKey(for: configuration.humanTurnOrder), forKey: Key.humanTurnOrder)
         defaults.set(configuration.boardSize, forKey: Key.boardSize)
         defaults.set(configuration.inactiveCellRatio, forKey: Key.inactiveCellRatio)
         defaults.set(shapeKey(for: configuration.boardShape), forKey: Key.boardShape)
@@ -31,9 +33,14 @@ struct GameConfigurationStore {
             return .standard
         }
 
+        let humanPlayer = defaults.string(forKey: Key.humanPlayer).flatMap(player(from:)) ?? .horizontal
+        let humanTurnOrder = defaults.string(forKey: Key.humanTurnOrder).flatMap(turnOrder(from:)) ?? .first
+
         return GameConfiguration(
             mode: mode,
             aiDifficulty: aiDifficulty,
+            humanPlayer: humanPlayer,
+            humanTurnOrder: humanTurnOrder,
             boardShape: boardShape,
             boardSize: boardSize,
             inactiveCellRatio: inactiveCellRatio
@@ -45,6 +52,8 @@ private extension GameConfigurationStore {
     enum Key {
         static let mode = "squart.gameConfiguration.mode"
         static let aiDifficulty = "squart.gameConfiguration.aiDifficulty"
+        static let humanPlayer = "squart.gameConfiguration.humanPlayer"
+        static let humanTurnOrder = "squart.gameConfiguration.humanTurnOrder"
         static let boardSize = "squart.gameConfiguration.boardSize"
         static let inactiveCellRatio = "squart.gameConfiguration.inactiveCellRatio"
         static let boardShape = "squart.gameConfiguration.boardShape"
@@ -89,6 +98,46 @@ private extension GameConfigurationStore {
             return .medium
         case "hard":
             return .hard
+        default:
+            return nil
+        }
+    }
+
+    func playerKey(for player: Player) -> String {
+        switch player {
+        case .horizontal:
+            return "horizontal"
+        case .vertical:
+            return "vertical"
+        }
+    }
+
+    func player(from key: String) -> Player? {
+        switch key {
+        case "horizontal":
+            return .horizontal
+        case "vertical":
+            return .vertical
+        default:
+            return nil
+        }
+    }
+
+    func turnOrderKey(for turnOrder: TurnOrder) -> String {
+        switch turnOrder {
+        case .first:
+            return "first"
+        case .second:
+            return "second"
+        }
+    }
+
+    func turnOrder(from key: String) -> TurnOrder? {
+        switch key {
+        case "first":
+            return .first
+        case "second":
+            return .second
         default:
             return nil
         }

@@ -13,6 +13,9 @@ struct RootView: View {
     @State private var isTodayChallengeCompleted = false
     @StateObject private var storeManager = StoreManager.shared
     @AppStorage(SquartThemeStore.selectedThemeIDKey) private var selectedThemeID = SquartVisualTheme.defaultTheme.id
+    #if DEBUG
+    @State private var screenshotConfiguration: ScreenshotConfiguration?
+    #endif
 
     var body: some View {
         let palette = selectedTheme.palette
@@ -75,11 +78,22 @@ struct RootView: View {
                     screen = .landing
                 }
             case .game(let configuration, let dailyChallenge):
-                GameView(configuration: configuration, dailyChallenge: dailyChallenge) {
-                    screen = .setup
-                } onDailyChallengeCompleted: {
-                    refreshDailyChallenge()
-                }
+                #if DEBUG
+                let debugScene = screenshotConfiguration?.screen.gamePreset
+                #else
+                let debugScene: ScreenshotConfiguration.GamePreset? = nil
+                #endif
+                GameView(
+                    configuration: configuration,
+                    dailyChallenge: dailyChallenge,
+                    onChangeSetup: {
+                        screen = .setup
+                    },
+                    onDailyChallengeCompleted: {
+                        refreshDailyChallenge()
+                    },
+                    screenshotConfiguration: debugScene
+                )
             }
         }
         .overlay(alignment: .topTrailing) {
@@ -110,6 +124,9 @@ struct RootView: View {
                 .presentationDragIndicator(.visible)
         }
         .task {
+            #if DEBUG
+            applyScreenshotSceneIfNeeded()
+            #endif
             await storeManager.refreshPurchasedProducts()
             sanitizeSelectedTheme()
             refreshDailyChallenge()
@@ -142,6 +159,25 @@ struct RootView: View {
         isTodayChallengeCompleted = DailyChallengeHistoryStore.shared.isCompleted(dateKey: todayChallenge.dateKey)
     }
 
+    #if DEBUG
+    private func applyScreenshotSceneIfNeeded() {
+        guard let scene = ScreenshotScene.fromLaunchArguments(ProcessInfo.processInfo.arguments) else {
+            return
+        }
+
+        let screenshot = ScreenshotSceneFactory.make(scene)
+        screenshotConfiguration = screenshot
+        selectedThemeID = screenshot.selectedTheme.id
+
+        switch screenshot.screen {
+        case .landing:
+            screen = .landing
+        case .game(let preset):
+            screen = .game(preset.configuration, preset.dailyChallenge)
+        }
+    }
+    #endif
+
     private func dailyChallengeButtonLabel(palette: SquartThemePalette) -> some View {
         HStack(spacing: 10) {
             Image(systemName: isTodayChallengeCompleted ? "checkmark.circle.fill" : "calendar")
@@ -151,9 +187,10 @@ struct RootView: View {
                 Text(isTodayChallengeCompleted ? "Completed Today" : "Daily Challenge")
                     .font(.system(size: 15, weight: .semibold))
 
-                Text(isTodayChallengeCompleted ? "Replay Today's Board" : "Today's Board is ready")
+                Text(isTodayChallengeCompleted ? "Replay: \(todayChallenge.setupSummary)" : todayChallenge.setupSummary)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(palette.mutedText)
+                    .lineLimit(2)
             }
         }
         .foregroundStyle(palette.accent)
@@ -166,6 +203,18 @@ struct RootView: View {
         )
     }
 }
+
+#if DEBUG
+private extension ScreenshotConfiguration.Screen {
+    var gamePreset: ScreenshotConfiguration.GamePreset? {
+        if case .game(let preset) = self {
+            return preset
+        }
+
+        return nil
+    }
+}
+#endif
 
 private struct PremiumBackground: View {
     let palette: SquartThemePalette

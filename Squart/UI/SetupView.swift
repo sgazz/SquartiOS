@@ -68,6 +68,8 @@ struct SetupView: View {
 
     @State private var selectedGameMode: GameMode = .pvp
     @State private var selectedAIDifficulty: AIDifficulty = .easy
+    @State private var selectedHumanPlayer: Player = .horizontal
+    @State private var selectedTurnOrder: TurnOrder = .first
     @State private var selectedBoardShape: BoardShapeOption = .square
     @State private var selectedBoardSize: BoardSizeOption = .ten
     @State private var selectedInactiveRatio: InactiveRatioOption = .standard
@@ -107,6 +109,31 @@ struct SetupView: View {
                                     }
                                     .pickerStyle(.segmented)
                                     .onChange(of: selectedAIDifficulty) { _, _ in
+                                        Haptics.selection()
+                                    }
+                                }
+                                .transition(.opacity.combined(with: .scale(scale: 0.985, anchor: .top)))
+
+                                setupPicker("Player Token") {
+                                    Picker("Player Token", selection: $selectedHumanPlayer) {
+                                        Text("Horizontal").tag(Player.horizontal)
+                                        Text("Vertical").tag(Player.vertical)
+                                    }
+                                    .pickerStyle(.segmented)
+                                    .onChange(of: selectedHumanPlayer) { _, _ in
+                                        Haptics.selection()
+                                    }
+                                }
+                                .transition(.opacity.combined(with: .scale(scale: 0.985, anchor: .top)))
+
+                                setupPicker("Turn Order") {
+                                    Picker("Turn Order", selection: $selectedTurnOrder) {
+                                        ForEach(TurnOrder.allCases) { turnOrder in
+                                            Text(turnOrder.rawValue).tag(turnOrder)
+                                        }
+                                    }
+                                    .pickerStyle(.segmented)
+                                    .onChange(of: selectedTurnOrder) { _, _ in
                                         Haptics.selection()
                                     }
                                 }
@@ -204,6 +231,8 @@ struct SetupView: View {
         }
         .animation(SquartTheme.microInteractionAnimation, value: selectedGameMode)
         .animation(SquartTheme.microInteractionAnimation, value: selectedAIDifficulty)
+        .animation(SquartTheme.microInteractionAnimation, value: selectedHumanPlayer)
+        .animation(SquartTheme.microInteractionAnimation, value: selectedTurnOrder)
         .animation(SquartTheme.microInteractionAnimation, value: selectedBoardShape)
         .animation(SquartTheme.microInteractionAnimation, value: selectedBoardSize)
         .animation(SquartTheme.microInteractionAnimation, value: selectedInactiveRatio)
@@ -213,6 +242,8 @@ struct SetupView: View {
         GameConfiguration(
             mode: selectedGameMode,
             aiDifficulty: selectedAIDifficulty,
+            humanPlayer: selectedHumanPlayer,
+            humanTurnOrder: selectedTurnOrder,
             boardShape: selectedBoardShape.boardShape(size: selectedBoardSize.rawValue),
             boardSize: selectedBoardSize.rawValue,
             inactiveCellRatio: selectedInactiveRatio.rawValue
@@ -248,6 +279,8 @@ struct SetupView: View {
     private func apply(_ configuration: GameConfiguration) {
         selectedGameMode = configuration.mode
         selectedAIDifficulty = configuration.aiDifficulty
+        selectedHumanPlayer = configuration.humanPlayer
+        selectedTurnOrder = configuration.humanTurnOrder
         selectedBoardShape = BoardShapeOption(configurationShape: configuration.boardShape)
         selectedBoardSize = BoardSizeOption(configurationSize: configuration.boardSize)
         selectedInactiveRatio = InactiveRatioOption(configurationRatio: configuration.inactiveCellRatio)

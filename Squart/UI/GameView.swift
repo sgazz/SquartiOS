@@ -20,11 +20,13 @@ struct GameView: View {
     @State private var isDailyChallengeCompleted = false
     @State private var show2DMoveHints = false
     @State private var moveHintTimerToken = 0
+    @State private var appliedMovePlayers: [Player] = []
 
     let configuration: GameConfiguration
     let dailyChallenge: DailyChallenge?
     let onChangeSetup: () -> Void
     let onDailyChallengeCompleted: () -> Void
+    private let screenshotConfiguration: ScreenshotConfiguration.GamePreset?
     private let ai = SquartAI()
     private let dailyCompletionStore: DailyChallengeHistoryStore
 
@@ -33,17 +35,35 @@ struct GameView: View {
         dailyChallenge: DailyChallenge? = nil,
         dailyCompletionStore: DailyChallengeHistoryStore = .shared,
         onChangeSetup: @escaping () -> Void = {},
-        onDailyChallengeCompleted: @escaping () -> Void = {}
+        onDailyChallengeCompleted: @escaping () -> Void = {},
+        screenshotConfiguration: ScreenshotConfiguration.GamePreset? = nil
     ) {
         self.configuration = configuration
         self.dailyChallenge = dailyChallenge
         self.dailyCompletionStore = dailyCompletionStore
         self.onChangeSetup = onChangeSetup
         self.onDailyChallengeCompleted = onDailyChallengeCompleted
+        self.screenshotConfiguration = screenshotConfiguration
         self._isDailyChallengeCompleted = State(
-            initialValue: dailyChallenge.map { dailyCompletionStore.isCompleted(dateKey: $0.dateKey) } ?? false
+            initialValue: (screenshotConfiguration?.isDailyCompleted ?? false) || (dailyChallenge.map { dailyCompletionStore.isCompleted(dateKey: $0.dateKey) } ?? false)
         )
-        self._game = State(initialValue: Self.newGame(configuration: configuration))
+        if let screenshotConfiguration {
+            let bootstrap = Self.bootstrapState(for: screenshotConfiguration)
+            self._game = State(initialValue: bootstrap.game)
+            self._boardMode = State(initialValue: screenshotConfiguration.boardMode)
+            self._isAITurnPending = State(initialValue: screenshotConfiguration.showsAITurnPending)
+            self._moveCount = State(initialValue: bootstrap.moveCount)
+            self._horizontalMoveCount = State(initialValue: bootstrap.horizontalMoveCount)
+            self._verticalMoveCount = State(initialValue: bootstrap.verticalMoveCount)
+            self._lastMovePositions = State(initialValue: bootstrap.lastMovePositions)
+            self._appliedMovePlayers = State(initialValue: bootstrap.appliedMovePlayers)
+            self._previewPosition = State(initialValue: screenshotConfiguration.previewOrigin)
+            self._aiPreviewPositions = State(initialValue: screenshotConfiguration.aiPreviewPositions)
+            self._isPlacementInputLocked = State(initialValue: screenshotConfiguration.lockInput)
+            self._didTriggerGameOverHaptic = State(initialValue: screenshotConfiguration.showsGameOverOverlay)
+        } else {
+            self._game = State(initialValue: Self.newGame(configuration: configuration))
+        }
     }
 
     var body: some View {
@@ -105,7 +125,11 @@ struct GameView: View {
                 }
             }
             .task {
+                if screenshotConfiguration?.showsGameOverOverlay == true {
+                    didTriggerGameOverHaptic = true
+                }
                 restart2DMoveHintTimer()
+                scheduleAIMoveIfNeeded()
             }
 
             if let winner = game.winner {
@@ -267,6 +291,7 @@ struct GameView: View {
         didTriggerGameOverHaptic = false
         Haptics.lightImpact()
         restart2DMoveHintTimer()
+        scheduleAIMoveIfNeeded()
     }
 
     private func rematch() {
@@ -306,11 +331,13 @@ struct GameView: View {
         moveCount = 0
         horizontalMoveCount = 0
         verticalMoveCount = 0
+        appliedMovePlayers = []
         clear2DMoveHints()
         if let dailyChallenge {
             isDailyChallengeCompleted = dailyCompletionStore.isCompleted(dateKey: dailyChallenge.dateKey)
         }
         restart2DMoveHintTimer()
+        scheduleAIMoveIfNeeded()
     }
 
     private var canHumanMove: Bool {
@@ -322,7 +349,7 @@ struct GameView: View {
         case .pvp:
             return true
         case .playerVsAI:
-            return game.currentPlayer == .horizontal
+            return game.currentPlayer == humanPlayer
         }
     }
 
@@ -330,7 +357,7 @@ struct GameView: View {
         guard
             configuration.mode == .playerVsAI,
             !game.isFinished,
-            game.currentPlayer == .vertical
+            game.currentPlayer == aiPlayer
         else {
             return
         }
@@ -350,8 +377,8 @@ struct GameView: View {
             }
 
             if let move = ai.move(
-                for: .vertical,
-                opponent: .horizontal,
+                for: aiPlayer,
+                opponent: humanPlayer,
                 on: game.board,
                 difficulty: configuration.aiDifficulty
             ) {
@@ -389,6 +416,7 @@ struct GameView: View {
         lastMovePositions = Set(move.occupiedPositions)
         moveAnimationToken += 1
         moveCount += 1
+        appliedMovePlayers.append(move.player)
         incrementMoveCount(for: move.player)
         Haptics.lightImpact()
         SoundEffects.playMove()
@@ -409,16 +437,11 @@ struct GameView: View {
             return
         }
 
-        switch configuration.mode {
-        case .pvp:
-            decrementMoveCount(for: game.currentPlayer)
-        case .playerVsAI:
-            if undoCount == 1 {
-                decrementMoveCount(for: .horizontal)
-            } else {
-                decrementMoveCount(for: .vertical)
-                decrementMoveCount(for: .horizontal)
-            }
+        let removedPlayers = appliedMovePlayers.suffix(undoCount)
+        appliedMovePlayers.removeLast(min(undoCount, appliedMovePlayers.count))
+
+        for player in removedPlayers {
+            decrementMoveCount(for: player)
         }
     }
 
@@ -448,14 +471,59 @@ struct GameView: View {
 
     private static func newGame(configuration: GameConfiguration) -> SquartGame {
         SquartGame(
-            board: BoardGenerator.board(for: configuration)
+            board: BoardGenerator.board(for: configuration),
+            startingPlayer: configuration.startingPlayer
+        )
+    }
+
+    private static func bootstrapState(
+        for preset: ScreenshotConfiguration.GamePreset
+    ) -> (
+        game: SquartGame,
+        moveCount: Int,
+        horizontalMoveCount: Int,
+        verticalMoveCount: Int,
+        lastMovePositions: Set<BoardPosition>,
+        appliedMovePlayers: [Player]
+    ) {
+        var game = Self.newGame(configuration: preset.configuration)
+        var appliedMovePlayers: [Player] = []
+        var lastMovePositions: Set<BoardPosition> = []
+        var horizontalMoveCount = 0
+        var verticalMoveCount = 0
+
+        for _ in 0..<preset.appliedPlies {
+            guard let move = game.validMovesForCurrentPlayer().first else {
+                break
+            }
+
+            guard game.play(move) else {
+                break
+            }
+
+            appliedMovePlayers.append(move.player)
+            lastMovePositions = Set(move.occupiedPositions)
+            if move.player == .horizontal {
+                horizontalMoveCount += 1
+            } else {
+                verticalMoveCount += 1
+            }
+        }
+
+        return (
+            game: game,
+            moveCount: appliedMovePlayers.count,
+            horizontalMoveCount: horizontalMoveCount,
+            verticalMoveCount: verticalMoveCount,
+            lastMovePositions: lastMovePositions,
+            appliedMovePlayers: appliedMovePlayers
         )
     }
 
     private func recordDailyCompletionIfNeeded(winner: Player?) {
         guard
             let dailyChallenge,
-            winner == .horizontal,
+            winner == humanPlayer,
             !isDailyChallengeCompleted
         else {
             return
@@ -477,8 +545,16 @@ struct GameView: View {
         case .pvp:
             return true
         case .playerVsAI:
-            return game.currentPlayer == .horizontal
+            return game.currentPlayer == humanPlayer
         }
+    }
+
+    private var humanPlayer: Player {
+        configuration.humanPlayer
+    }
+
+    private var aiPlayer: Player {
+        configuration.aiPlayer
     }
 
     private func restart2DMoveHintTimer() {
@@ -581,7 +657,7 @@ private struct DailyChallengeBanner: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(palette.strongText)
 
-                Text(isCompleted ? "Daily win recorded locally" : challenge.subtitle)
+                Text(isCompleted ? "Daily win recorded locally" : challenge.roleSummary)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(palette.mutedText)
             }

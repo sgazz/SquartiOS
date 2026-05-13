@@ -29,6 +29,8 @@ nonisolated struct DailyChallengeGenerator {
         let fallback = GameConfiguration(
             mode: .playerVsAI,
             aiDifficulty: .medium,
+            humanPlayer: .horizontal,
+            humanTurnOrder: .first,
             boardShape: .square(size: 10),
             boardSize: 10,
             inactiveCellRatio: 0.18,
@@ -47,6 +49,8 @@ nonisolated struct DailyChallengeGenerator {
         let sizes = [8, 10, 12]
         let ratios = [0.10, 0.18, 0.25]
         let difficulties: [AIDifficulty] = [.easy, .medium, .hard]
+        let humanPlayers: [Player] = [.horizontal, .vertical]
+        let turnOrders: [TurnOrder] = [.first, .second]
 
         let size = sizes[index(seed, shift: 8, count: sizes.count)]
         let shape = boardShape(
@@ -57,6 +61,8 @@ nonisolated struct DailyChallengeGenerator {
         return GameConfiguration(
             mode: .playerVsAI,
             aiDifficulty: difficulties[index(seed, shift: 24, count: difficulties.count)],
+            humanPlayer: humanPlayers[index(seed, shift: 40, count: humanPlayers.count)],
+            humanTurnOrder: turnOrders[index(seed, shift: 48, count: turnOrders.count)],
             boardShape: shape,
             boardSize: size,
             inactiveCellRatio: ratios[index(seed, shift: 32, count: ratios.count)],
