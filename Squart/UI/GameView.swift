@@ -5,6 +5,7 @@ struct GameView: View {
     @State private var boardMode: GameBoardMode = .classic
     @State private var previewPosition: BoardPosition?
     @State private var resetCameraToken = 0
+    @State private var enter3DResetToken = 0
     @State private var rotateLeftToken = 0
     @State private var rotateRightToken = 0
     @State private var isAITurnPending = false
@@ -122,6 +123,7 @@ struct GameView: View {
                     restart2DMoveHintTimer()
                 } else {
                     clear2DMoveHints()
+                    enter3DResetToken += 1
                 }
             }
             .task {
@@ -129,6 +131,9 @@ struct GameView: View {
                     didTriggerGameOverHaptic = true
                 }
                 restart2DMoveHintTimer()
+                if boardMode == .board3D {
+                    enter3DResetToken += 1
+                }
                 scheduleAIMoveIfNeeded()
             }
 
@@ -153,6 +158,7 @@ struct GameView: View {
 
             ClassicBoardView(
                 board: game.board,
+                placedMoves: game.placedMoves,
                 currentPlayer: game.currentPlayer,
                 showMoveHints: show2DMoveHints,
                 isFinished: game.isFinished
@@ -166,11 +172,13 @@ struct GameView: View {
         case .board3D:
             SquartSceneView(
                 board: game.board,
+                viewportHint: size,
                 previewPositions: previewPositions,
                 aiPreviewPositions: aiPreviewPositions,
                 lastMovePositions: lastMovePositions,
                 moveAnimationToken: moveAnimationToken,
                 resetCameraToken: resetCameraToken,
+                forceFitToken: enter3DResetToken,
                 rotateLeftToken: rotateLeftToken,
                 rotateRightToken: rotateRightToken
             ) { position in
@@ -323,6 +331,10 @@ struct GameView: View {
         aiTurnToken += 1
         isAITurnPending = false
         isPlacementInputLocked = false
+        resetCameraToken += 1
+        if boardMode == .board3D {
+            enter3DResetToken += 1
+        }
         game = Self.newGame(configuration: configuration)
         lastMovePositions = []
         previewPosition = nil

@@ -57,39 +57,46 @@ struct GameHUDView: View {
 
             HStack(spacing: 10) {
                 Button(action: onUndoLastMove) {
-                    HUDButtonLabel(title: "Undo", isEnabled: canUndo)
+                    HUDIconButtonLabel(systemName: "arrow.uturn.backward", isEnabled: canUndo)
                 }
                 .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.975, pressedOpacity: 0.80))
                 .disabled(!canUndo)
+                .accessibilityLabel("Undo")
+                .accessibilityHint("Reverts the last move")
 
                 Button(action: onResetGame) {
-                    HUDButtonLabel(title: "Reset Game")
+                    HUDIconButtonLabel(systemName: "arrow.counterclockwise")
                 }
                 .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.975, pressedOpacity: 0.82))
+                .accessibilityLabel("Reset game")
 
                 Button(action: onChangeSetup) {
-                    HUDButtonLabel(title: "Setup")
+                    HUDIconButtonLabel(systemName: "slider.horizontal.3")
                 }
                 .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.975, pressedOpacity: 0.82))
+                .accessibilityLabel("Change setup")
 
                 if boardMode == .board3D {
                     Button(action: onRotateBoardLeft) {
-                        HUDButtonLabel(title: "Left 90")
+                        HUDIconButtonLabel(systemName: "rotate.left")
                     }
                     .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.975, pressedOpacity: 0.82))
                     .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .trailing)))
+                    .accessibilityLabel("Rotate left 90 degrees")
 
                     Button(action: onRotateBoardRight) {
-                        HUDButtonLabel(title: "Right 90")
+                        HUDIconButtonLabel(systemName: "rotate.right")
                     }
                     .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.975, pressedOpacity: 0.82))
                     .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .trailing)))
+                    .accessibilityLabel("Rotate right 90 degrees")
 
                     Button(action: onResetCamera) {
-                        HUDButtonLabel(title: "Reset Camera")
+                        HUDIconButtonLabel(systemName: "viewfinder")
                     }
                     .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.975, pressedOpacity: 0.82))
                     .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .trailing)))
+                    .accessibilityLabel("Reset camera")
                 }
             }
         }
@@ -115,20 +122,17 @@ struct GameHUDView: View {
     }
 }
 
-private struct HUDButtonLabel: View {
+private struct HUDIconButtonLabel: View {
     @Environment(\.squartPalette) private var palette
 
-    let title: String
+    let systemName: String
     var isEnabled = true
 
     var body: some View {
-        Text(title)
-            .font(.system(size: 13, weight: .medium))
+        Image(systemName: systemName)
+            .font(.system(size: 14, weight: .semibold))
             .foregroundStyle(isEnabled ? palette.bodyText : palette.quietText.opacity(0.72))
-            .lineLimit(1)
-            .minimumScaleFactor(0.78)
-            .frame(maxWidth: .infinity)
-            .frame(height: 36)
+            .frame(width: 44, height: 44)
             .background(
                 Capsule()
                     .stroke(palette.border, lineWidth: 1)

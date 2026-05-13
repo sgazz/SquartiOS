@@ -4,6 +4,7 @@ struct ClassicBoardView: View {
     @Environment(\.squartPalette) private var palette
 
     let board: SquartBoard
+    let placedMoves: [Move]
     let currentPlayer: Player
     let showMoveHints: Bool
     let isFinished: Bool
@@ -17,7 +18,7 @@ struct ClassicBoardView: View {
             let cellSize = cellSize(for: side)
             let gridWidth = gridWidth(cellSize: cellSize)
             let gridHeight = gridHeight(cellSize: cellSize)
-            let dominoes = dominoPieces
+            let dominoes = placedDominoes
 
             ZStack(alignment: .topLeading) {
                 VStack(spacing: spacing) {
@@ -91,33 +92,14 @@ struct ClassicBoardView: View {
         cellSize * CGFloat(board.rows) + spacing * CGFloat(board.rows - 1)
     }
 
-    private var dominoPieces: [ClassicDominoPiece] {
-        var pieces: [ClassicDominoPiece] = []
-
-        for row in 0..<board.rows {
-            for column in 0..<board.columns {
-                let origin = BoardPosition(row: row, column: column)
-
-                guard case .occupied(let player) = board.cellState(at: origin) else {
-                    continue
-                }
-
-                switch player {
-                case .horizontal:
-                    guard column + 1 < board.columns else { continue }
-                    let next = BoardPosition(row: row, column: column + 1)
-                    guard case .occupied(.horizontal) = board.cellState(at: next) else { continue }
-                    pieces.append(ClassicDominoPiece(origin: origin, orientation: .horizontal, owner: player))
-                case .vertical:
-                    guard row + 1 < board.rows else { continue }
-                    let next = BoardPosition(row: row + 1, column: column)
-                    guard case .occupied(.vertical) = board.cellState(at: next) else { continue }
-                    pieces.append(ClassicDominoPiece(origin: origin, orientation: .vertical, owner: player))
-                }
-            }
+    private var placedDominoes: [ClassicDominoPiece] {
+        placedMoves.map { move in
+            ClassicDominoPiece(
+                origin: move.origin,
+                orientation: move.player == .horizontal ? .horizontal : .vertical,
+                owner: move.player
+            )
         }
-
-        return pieces
     }
 
     private func center(for domino: ClassicDominoPiece, cellSize: CGFloat) -> CGPoint {
@@ -165,6 +147,7 @@ private enum ClassicDominoOrientation: String {
             columns: 10,
             inactiveCells: [BoardPosition(row: 1, column: 1)]
         ),
+        placedMoves: [],
         currentPlayer: .horizontal,
         showMoveHints: false,
         isFinished: false

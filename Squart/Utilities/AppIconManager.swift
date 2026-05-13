@@ -31,6 +31,33 @@ final class AppIconManager: ObservableObject {
         defaults.set(selectedTheme.id, forKey: Self.selectedIconThemeIDKey)
     }
 
+    func enforceAccessibleIcon(access: ThemeAccess) async {
+        let currentTheme = Self.theme(forAlternateIconName: UIApplication.shared.alternateIconName)
+            ?? Self.storedTheme(in: defaults)
+            ?? .defaultTheme
+
+        guard !access.canUseAppIcon(for: currentTheme) else {
+            refreshSelectedTheme(access: access)
+            return
+        }
+
+        guard supportsAlternateIcons else {
+            refreshSelectedTheme(access: access)
+            return
+        }
+
+        do {
+            try await applyIcon(named: Self.alternateIconName(for: .defaultTheme))
+            selectedTheme = .defaultTheme
+            defaults.set(selectedTheme.id, forKey: Self.selectedIconThemeIDKey)
+            statusMessage = nil
+        } catch {
+            selectedTheme = .defaultTheme
+            defaults.set(selectedTheme.id, forKey: Self.selectedIconThemeIDKey)
+            statusMessage = "Could not update the app icon."
+        }
+    }
+
     func setIcon(for theme: SquartVisualTheme, access: ThemeAccess) async -> AppIconChangeResult {
         guard access.canUseAppIcon(for: theme) else {
             statusMessage = "Squart Supporter unlocks this app icon."

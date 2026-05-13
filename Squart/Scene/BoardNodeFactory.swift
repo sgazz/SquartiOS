@@ -224,13 +224,6 @@ enum BoardNodeFactory {
         let node = SCNNode(geometry: player == .horizontal ? geometry.horizontalDomino : geometry.verticalDomino)
         node.name = dominoName(for: positions)
         node.castsShadow = true
-        node.addChildNode(makeDominoTopLine(for: player, geometry: geometry))
-        return node
-    }
-
-    private static func makeDominoTopLine(for player: Player, geometry: BoardGeometry) -> SCNNode {
-        let node = SCNNode(geometry: player == .horizontal ? geometry.horizontalDominoTopLine : geometry.verticalDominoTopLine)
-        node.position = SCNVector3(0, 0.098, 0)
         return node
     }
 
@@ -430,8 +423,6 @@ private struct BoardGeometry {
     let aiPreviewVerticalRail: SCNGeometry
     let horizontalDomino: SCNGeometry
     let verticalDomino: SCNGeometry
-    let horizontalDominoTopLine: SCNGeometry
-    let verticalDominoTopLine: SCNGeometry
     let blockerCap: SCNGeometry
 
     init(materials: SquartSceneMaterials) {
@@ -445,10 +436,8 @@ private struct BoardGeometry {
         self.aiPreviewFill = Self.box(width: 0.72, height: 0.018, length: 0.72, chamferRadius: 0.04, material: materials.aiPreviewFill)
         self.aiPreviewHorizontalRail = Self.previewHorizontalRail(material: materials.aiPreviewEdge)
         self.aiPreviewVerticalRail = Self.previewVerticalRail(material: materials.aiPreviewEdge)
-        self.horizontalDomino = Self.box(width: 1.68, height: 0.20, length: 0.80, chamferRadius: 0.08, material: materials.horizontalPiece)
-        self.verticalDomino = Self.box(width: 0.80, height: 0.20, length: 1.68, chamferRadius: 0.08, material: materials.verticalPiece)
-        self.horizontalDominoTopLine = Self.box(width: 1.12, height: 0.012, length: 0.050, chamferRadius: 0.008, material: materials.horizontalPieceAccent)
-        self.verticalDominoTopLine = Self.box(width: 0.050, height: 0.012, length: 1.12, chamferRadius: 0.008, material: materials.verticalPieceAccent)
+        self.horizontalDomino = Self.box(width: 1.68, height: 0.20, length: 0.80, chamferRadius: 0.09, material: materials.horizontalPiece)
+        self.verticalDomino = Self.box(width: 0.80, height: 0.20, length: 1.68, chamferRadius: 0.09, material: materials.verticalPiece)
         self.blockerCap = Self.box(width: 0.58, height: 0.035, length: 0.58, chamferRadius: 0.035, material: materials.blockerCap)
     }
 

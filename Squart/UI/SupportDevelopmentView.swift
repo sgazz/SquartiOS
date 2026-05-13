@@ -54,7 +54,7 @@ struct SupportDevelopmentView: View {
                                     await storeManager.restorePurchases()
                                 }
                             } label: {
-                                Text("Restore Purchases")
+                                Label("Restore Purchases", systemImage: "arrow.clockwise")
                             }
                             .buttonStyle(SquartSecondaryButtonStyle(width: 260))
                         }

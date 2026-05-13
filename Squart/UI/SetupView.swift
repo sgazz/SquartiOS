@@ -202,7 +202,9 @@ struct SetupView: View {
                 .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.985, pressedOpacity: 0.88))
 
                 HStack(spacing: 12) {
-                    Button("Back", action: onBack)
+                    Button(action: onBack) {
+                        Label("Back", systemImage: "chevron.left")
+                    }
                         .buttonStyle(SquartSecondaryButtonStyle(width: 112))
 
                     Button {
