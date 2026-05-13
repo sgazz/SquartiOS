@@ -4,17 +4,7 @@ import StoreKit
 struct SupportDevelopmentView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.squartPalette) private var palette
-    @StateObject private var storeManager: StoreManager
-
-    @MainActor
-    init() {
-        self.init(storeManager: .shared)
-    }
-
-    @MainActor
-    init(storeManager: StoreManager) {
-        self._storeManager = StateObject(wrappedValue: storeManager)
-    }
+    @EnvironmentObject private var storeManager: StoreManager
 
     var body: some View {
         ZStack {
@@ -76,6 +66,11 @@ struct SupportDevelopmentView: View {
         .task {
             await storeManager.refreshPurchasedProducts()
             await storeManager.loadProducts()
+        }
+        .onChange(of: storeManager.purchasedProductIDs) { _, newValue in
+            #if DEBUG
+            print("[SquartStore] SupportDevelopmentView observed purchasedProductIDs=\(newValue.sorted())")
+            #endif
         }
     }
 
@@ -140,4 +135,5 @@ struct SupportDevelopmentView: View {
 
 #Preview {
     SupportDevelopmentView()
+        .environmentObject(StoreManager.shared)
 }

@@ -3,20 +3,9 @@ import SwiftUI
 struct AppIconPickerView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.squartPalette) private var palette
-    @StateObject private var storeManager: StoreManager
-    @StateObject private var iconManager: AppIconManager
+    @EnvironmentObject private var storeManager: StoreManager
+    @EnvironmentObject private var iconManager: AppIconManager
     @State private var isShowingSupportDevelopment = false
-
-    @MainActor
-    init() {
-        self.init(storeManager: .shared, iconManager: .shared)
-    }
-
-    @MainActor
-    init(storeManager: StoreManager, iconManager: AppIconManager) {
-        self._storeManager = StateObject(wrappedValue: storeManager)
-        self._iconManager = StateObject(wrappedValue: iconManager)
-    }
 
     var body: some View {
         ZStack {
@@ -54,10 +43,13 @@ struct AppIconPickerView: View {
             iconManager.refreshSelectedTheme(access: access)
         }
         .onChange(of: storeManager.purchasedProductIDs) { _, _ in
+            #if DEBUG
+            print("[SquartStore] AppIconPickerView observed purchasedProductIDs=\(storeManager.purchasedProductIDs.sorted())")
+            #endif
             iconManager.refreshSelectedTheme(access: access)
         }
         .sheet(isPresented: $isShowingSupportDevelopment) {
-            SupportDevelopmentView(storeManager: storeManager)
+            SupportDevelopmentView()
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
@@ -211,4 +203,6 @@ struct AppIconPickerView: View {
 
 #Preview {
     AppIconPickerView()
+        .environmentObject(StoreManager.shared)
+        .environmentObject(AppIconManager.shared)
 }

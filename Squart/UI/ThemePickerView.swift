@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ThemePickerView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var storeManager: StoreManager
+    @EnvironmentObject private var storeManager: StoreManager
     @State private var selectedTheme: SquartVisualTheme
     @State private var isShowingSupportDevelopment = false
     @State private var isShowingAppIcons = false
@@ -10,17 +10,9 @@ struct ThemePickerView: View {
 
     private let store: SquartThemeStore
 
-    @MainActor
-    init() {
-        self.init(store: .shared, storeManager: .shared)
-    }
-
-    @MainActor
-    init(store: SquartThemeStore, storeManager: StoreManager) {
+    init(store: SquartThemeStore = .shared) {
         self.store = store
-        self._storeManager = StateObject(wrappedValue: storeManager)
-        let access = ThemeAccess(purchasedProductIDs: storeManager.purchasedProductIDs)
-        self._selectedTheme = State(initialValue: store.loadSelectedTheme(access: access))
+        self._selectedTheme = State(initialValue: store.loadSelectedTheme())
     }
 
     var body: some View {
@@ -84,6 +76,9 @@ struct ThemePickerView: View {
             selectedTheme = store.sanitizeSelectedTheme(access: access)
         }
         .onChange(of: storeManager.purchasedProductIDs) { _, _ in
+            #if DEBUG
+            print("[SquartStore] ThemePickerView observed purchasedProductIDs=\(storeManager.purchasedProductIDs.sorted())")
+            #endif
             if let pendingThemeAfterUnlock, access.canUse(pendingThemeAfterUnlock) {
                 withAnimation(SquartTheme.themeTransitionAnimation) {
                     selectedTheme = pendingThemeAfterUnlock
@@ -97,12 +92,12 @@ struct ThemePickerView: View {
             }
         }
         .sheet(isPresented: $isShowingSupportDevelopment) {
-            SupportDevelopmentView(storeManager: storeManager)
+            SupportDevelopmentView()
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $isShowingAppIcons) {
-            AppIconPickerView(storeManager: storeManager, iconManager: .shared)
+            AppIconPickerView()
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
@@ -158,4 +153,6 @@ struct ThemePickerView: View {
 
 #Preview {
     ThemePickerView()
+        .environmentObject(StoreManager.shared)
+        .environmentObject(AppIconManager.shared)
 }

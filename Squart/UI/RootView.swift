@@ -11,8 +11,9 @@ struct RootView: View {
     @State private var isShowingSettings = false
     @State private var todayChallenge = DailyChallengeStore.shared.today()
     @State private var isTodayChallengeCompleted = false
-    @StateObject private var storeManager = StoreManager.shared
-    @StateObject private var iconManager = AppIconManager.shared
+    @EnvironmentObject private var storeManager: StoreManager
+    @EnvironmentObject private var iconManager: AppIconManager
+    @Environment(\.scenePhase) private var scenePhase
     @AppStorage(SquartThemeStore.selectedThemeIDKey) private var selectedThemeID = SquartVisualTheme.defaultTheme.id
     #if DEBUG
     @State private var screenshotConfiguration: ScreenshotConfiguration?
@@ -134,9 +135,18 @@ struct RootView: View {
             refreshDailyChallenge()
         }
         .onChange(of: storeManager.purchasedProductIDs) { _, _ in
+            #if DEBUG
+            print("[SquartStore] RootView observed purchasedProductIDs=\(storeManager.purchasedProductIDs.sorted())")
+            #endif
             sanitizeSelectedTheme()
             Task {
                 await iconManager.enforceAccessibleIcon(access: themeAccess)
+            }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            Task {
+                await storeManager.refreshPurchasedProducts()
             }
         }
         .environment(\.squartPalette, palette)
@@ -232,4 +242,6 @@ private struct PremiumBackground: View {
 
 #Preview {
     RootView()
+        .environmentObject(StoreManager.shared)
+        .environmentObject(AppIconManager.shared)
 }
