@@ -29,6 +29,9 @@ final class AppIconManager: ObservableObject {
             ?? .defaultTheme
         selectedTheme = access.canUseAppIcon(for: currentTheme) ? currentTheme : .defaultTheme
         defaults.set(selectedTheme.id, forKey: Self.selectedIconThemeIDKey)
+        #if DEBUG
+        print("[SquartStore] AppIconManager refreshSelectedTheme current=\(currentTheme.id) selected=\(selectedTheme.id)")
+        #endif
     }
 
     func enforceAccessibleIcon(access: ThemeAccess) async {
@@ -51,10 +54,16 @@ final class AppIconManager: ObservableObject {
             selectedTheme = .defaultTheme
             defaults.set(selectedTheme.id, forKey: Self.selectedIconThemeIDKey)
             statusMessage = nil
+            #if DEBUG
+            print("[SquartStore] AppIconManager enforced default icon due to missing entitlement")
+            #endif
         } catch {
             selectedTheme = .defaultTheme
             defaults.set(selectedTheme.id, forKey: Self.selectedIconThemeIDKey)
             statusMessage = "Could not update the app icon."
+            #if DEBUG
+            print("[SquartStore] AppIconManager failed to enforce default icon")
+            #endif
         }
     }
 

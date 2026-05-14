@@ -24,6 +24,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		CF8D86D32FB526D600280C1E /* Squart.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; name = Squart.storekit; path = StoreKit/Squart.storekit; sourceTree = "<group>"; };
 		CFC200732FAF161E007377E4 /* Squart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Squart.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CFC200802FAF1620007377E4 /* SquartTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SquartTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CFC2008A2FAF1620007377E4 /* SquartUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SquartUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -88,6 +89,7 @@
 		CFC2006A2FAF161E007377E4 = {
 			isa = PBXGroup;
 			children = (
+				CF8D86D32FB526D600280C1E /* Squart.storekit */,
 				CFC200752FAF161E007377E4 /* Squart */,
 				CFC200832FAF1620007377E4 /* SquartTests */,
 				CFC2008D2FAF1620007377E4 /* SquartUITests */,

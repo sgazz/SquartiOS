@@ -8,7 +8,13 @@ nonisolated struct ThemeAccess {
     }
 
     func canUse(_ theme: SquartVisualTheme) -> Bool {
-        !theme.isPremium || purchasedProductIDs.contains(StoreProduct.supporter.id)
+        let isAllowed = !theme.isPremium || purchasedProductIDs.contains(StoreProduct.supporter.id)
+        #if DEBUG
+        if theme.isPremium {
+            print("[SquartStore] ThemeAccess canUse theme=\(theme.id) allowed=\(isAllowed) supporterOwned=\(purchasedProductIDs.contains(StoreProduct.supporter.id))")
+        }
+        #endif
+        return isAllowed
     }
 
     func canUseAppIcon(for theme: SquartVisualTheme) -> Bool {
