@@ -36,7 +36,7 @@ struct ClassicCellView: View {
         case .outside:
             return Color.clear
         case .inactive:
-            return palette.secondaryAccent.opacity(0.34)
+            return palette.blockerCell
         case .empty:
             return palette.panel
         case .occupied:
@@ -49,7 +49,7 @@ struct ClassicCellView: View {
         case .outside:
             return Color.clear
         case .inactive:
-            return palette.accent.opacity(0.18)
+            return palette.blockerCellBorder
         case .empty:
             return isHintedOrigin ? palette.accent.opacity(0.62) : palette.subtleBorder
         case .occupied:
