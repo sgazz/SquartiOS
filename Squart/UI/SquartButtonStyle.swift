@@ -38,12 +38,12 @@ struct SquartSecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 16, weight: .medium))
-            .foregroundStyle(foreground ?? palette.bodyText)
+            .foregroundStyle(foreground ?? palette.segmentedText)
             .frame(width: width, height: height)
             .background(
                 Capsule()
-                    .stroke(palette.border.opacity(1.35), lineWidth: 1)
-                    .background(Capsule().fill(palette.subtlePanel))
+                    .stroke(palette.controlBorder, lineWidth: 1)
+                    .background(Capsule().fill(palette.segmentedBackground))
             )
             .scaleEffect(configuration.isPressed && !reduceMotion ? 0.985 : 1)
             .brightness(configuration.isPressed ? -0.012 : 0)

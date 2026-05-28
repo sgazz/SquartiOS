@@ -47,6 +47,12 @@ struct SupportDevelopmentView: View {
                                 Label("Restore Purchases", systemImage: "arrow.clockwise")
                             }
                             .buttonStyle(SquartSecondaryButtonStyle(width: 260))
+
+                            Text("On a new device, use the same Apple ID, then tap Restore Purchases.")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(palette.mutedText)
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                         .frame(maxWidth: .infinity)
 

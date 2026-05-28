@@ -155,11 +155,11 @@ final class StoreManager: ObservableObject {
         let resolvedIDs: Set<String>
         switch policy {
         case .strict:
-            resolvedIDs = entitlementIDs
-                .union(pendingVerifiedProductIDs)
-                .union(locallyVerifiedProductIDs)
+            // Trust StoreKit entitlements; do not keep stale local cache after refund/revoke.
+            resolvedIDs = entitlementIDs.union(pendingVerifiedProductIDs)
             pendingVerifiedProductIDs = pendingVerifiedProductIDs.subtracting(entitlementIDs)
         case .mergePending:
+            // After a fresh purchase, entitlements may lag; keep local cache until sync catches up.
             resolvedIDs = entitlementIDs
                 .union(pendingVerifiedProductIDs)
                 .union(locallyVerifiedProductIDs)

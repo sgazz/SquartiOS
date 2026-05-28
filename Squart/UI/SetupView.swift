@@ -94,7 +94,7 @@ struct SetupView: View {
                                         Text(mode.rawValue).tag(mode)
                                     }
                                 }
-                                .pickerStyle(.segmented)
+                                .squartSegmentedControlStyle(palette: palette)
                                 .onChange(of: selectedGameMode) { _, _ in
                                     Haptics.selection()
                                 }
@@ -107,7 +107,7 @@ struct SetupView: View {
                                             Text(difficulty.rawValue).tag(difficulty)
                                         }
                                     }
-                                    .pickerStyle(.segmented)
+                                    .squartSegmentedControlStyle(palette: palette)
                                     .onChange(of: selectedAIDifficulty) { _, _ in
                                         Haptics.selection()
                                     }
@@ -119,7 +119,7 @@ struct SetupView: View {
                                         Text("Horizontal").tag(Player.horizontal)
                                         Text("Vertical").tag(Player.vertical)
                                     }
-                                    .pickerStyle(.segmented)
+                                    .squartSegmentedControlStyle(palette: palette)
                                     .onChange(of: selectedHumanPlayer) { _, _ in
                                         Haptics.selection()
                                     }
@@ -132,7 +132,7 @@ struct SetupView: View {
                                             Text(turnOrder.rawValue).tag(turnOrder)
                                         }
                                     }
-                                    .pickerStyle(.segmented)
+                                    .squartSegmentedControlStyle(palette: palette)
                                     .onChange(of: selectedTurnOrder) { _, _ in
                                         Haptics.selection()
                                     }
@@ -150,7 +150,7 @@ struct SetupView: View {
                                         Text(option.rawValue).tag(option)
                                     }
                                 }
-                                .pickerStyle(.segmented)
+                                .squartSegmentedControlStyle(palette: palette)
                                 .onChange(of: selectedBoardShape) { _, _ in
                                     Haptics.selection()
                                 }
@@ -162,7 +162,7 @@ struct SetupView: View {
                                         Text(option.title).tag(option)
                                     }
                                 }
-                                .pickerStyle(.segmented)
+                                .squartSegmentedControlStyle(palette: palette)
                                 .onChange(of: selectedBoardSize) { _, _ in
                                     Haptics.selection()
                                 }
@@ -174,7 +174,7 @@ struct SetupView: View {
                                         Text(option.title).tag(option)
                                     }
                                 }
-                                .pickerStyle(.segmented)
+                                .squartSegmentedControlStyle(palette: palette)
                                 .onChange(of: selectedInactiveRatio) { _, _ in
                                     Haptics.selection()
                                 }
@@ -182,7 +182,6 @@ struct SetupView: View {
                         }
                     }
                 }
-                .tint(palette.accent)
 
                 Button {
                     Haptics.selection()
@@ -286,6 +285,21 @@ struct SetupView: View {
         selectedBoardShape = BoardShapeOption(configurationShape: configuration.boardShape)
         selectedBoardSize = BoardSizeOption(configurationSize: configuration.boardSize)
         selectedInactiveRatio = InactiveRatioOption(configurationRatio: configuration.inactiveCellRatio)
+    }
+}
+
+private extension View {
+    func squartSegmentedControlStyle(palette: SquartThemePalette) -> some View {
+        self
+            .pickerStyle(.segmented)
+            .tint(palette.segmentedSelectedBackground)
+            .environment(\.colorScheme, palette.segmentedColorScheme)
+            .padding(5)
+            .background(
+                Capsule()
+                    .fill(palette.segmentedBackground)
+                    .overlay(Capsule().stroke(palette.controlBorder, lineWidth: 1))
+            )
     }
 }
 

@@ -50,7 +50,14 @@ struct GameHUDView: View {
                 }
             }
             .pickerStyle(.segmented)
-            .tint(palette.accent)
+            .tint(palette.segmentedSelectedBackground)
+            .environment(\.colorScheme, palette.segmentedColorScheme)
+            .padding(5)
+            .background(
+                Capsule()
+                    .fill(palette.segmentedBackground)
+                    .overlay(Capsule().stroke(palette.controlBorder, lineWidth: 1))
+            )
             .onChange(of: boardMode) { _, _ in
                 Haptics.selection()
             }
@@ -131,12 +138,12 @@ private struct HUDIconButtonLabel: View {
     var body: some View {
         Image(systemName: systemName)
             .font(.system(size: 14, weight: .semibold))
-            .foregroundStyle(isEnabled ? palette.bodyText : palette.quietText.opacity(0.72))
+            .foregroundStyle(isEnabled ? palette.segmentedText : palette.disabledText)
             .frame(width: 44, height: 44)
             .background(
                 Capsule()
-                    .stroke(palette.border, lineWidth: 1)
-                    .background(Capsule().fill(palette.subtlePanel.opacity(isEnabled ? 1 : 0.56)))
+                    .stroke(palette.controlBorder, lineWidth: 1)
+                    .background(Capsule().fill(palette.segmentedBackground.opacity(isEnabled ? 1 : 0.75)))
             )
     }
 }
