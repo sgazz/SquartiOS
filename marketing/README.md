@@ -21,9 +21,9 @@ Then visit `http://localhost:8080`.
    - Folder: **`/marketing`**
 3. Marketing URL for App Store Connect:
 
-   **https://sgazz.github.io/Squart/**
+   **https://sgazz.github.io/SquartiOS/**
 
-   GitHub project Pages uses the repository name in the path. The GitHub repo must be named **`Squart`** (rename from `SquartiOS` in repo Settings if needed).
+   Repository: [github.com/sgazz/SquartiOS](https://github.com/sgazz/SquartiOS)
 
 ## Before submit
 
