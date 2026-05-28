@@ -10,187 +10,21 @@
   <meta property="og:url" content="https://sgazz.github.io/SquartiOS/">
   <meta property="og:title" content="Squart — Quiet Tactical Board Game">
   <meta property="og:description" content="Place two-cell pieces, deny space, and outlast your opponent. 2D and 3D boards, local PvP, AI, and a daily challenge.">
+  <link rel="stylesheet" href="site.css">
   <style>
-    :root {
-      --bg-top: #121110;
-      --bg-mid: #1f1c1a;
-      --bg-bottom: #0d0d0d;
-      --panel: rgba(255, 255, 255, 0.055);
-      --border: rgba(255, 255, 255, 0.09);
-      --text: rgba(255, 255, 255, 0.94);
-      --body: rgba(255, 255, 255, 0.76);
-      --muted: rgba(255, 255, 255, 0.58);
-      --accent: #c7a885;
-      --accent-dim: #946e4d;
-      --button-text: #291f17;
-      --max: 720px;
-      --radius: 16px;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      color: var(--body);
-      background: linear-gradient(145deg, var(--bg-top), var(--bg-mid) 45%, var(--bg-bottom));
-      min-height: 100vh;
-      line-height: 1.55;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    .wrap {
-      max-width: var(--max);
-      margin: 0 auto;
-      padding: 48px 24px 64px;
-    }
-
-    header {
-      margin-bottom: 56px;
-    }
-
-    .eyebrow {
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 12px;
-    }
-
+    header { margin-bottom: 56px; }
     h1 {
       font-size: clamp(2.4rem, 8vw, 3.25rem);
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      color: var(--text);
       line-height: 1.08;
       margin-bottom: 12px;
     }
-
-    .tagline {
-      font-size: clamp(1.1rem, 3.5vw, 1.35rem);
-      color: var(--muted);
-      font-weight: 500;
-      max-width: 34ch;
-    }
-
-    .hero-copy {
-      margin-top: 24px;
-      font-size: 1.05rem;
-      max-width: 52ch;
-    }
-
-    .cta {
-      display: inline-block;
-      margin-top: 28px;
-      padding: 14px 28px;
-      border-radius: 999px;
-      background: var(--accent);
-      color: var(--button-text);
-      font-size: 15px;
-      font-weight: 600;
-      text-decoration: none;
-      transition: transform 0.15s ease, opacity 0.15s ease;
-    }
-
-    .cta:hover { transform: scale(0.98); opacity: 0.92; }
+    section { margin-bottom: 40px; }
     .cta[aria-disabled="true"] {
       pointer-events: none;
       opacity: 0.55;
       cursor: default;
     }
-
-    .cta-note {
-      display: block;
-      margin-top: 10px;
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    section {
-      margin-bottom: 40px;
-      padding: 28px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      backdrop-filter: blur(12px);
-    }
-
-    h2 {
-      font-size: 1.25rem;
-      font-weight: 650;
-      color: var(--text);
-      margin-bottom: 14px;
-      letter-spacing: -0.02em;
-    }
-
-    p + p { margin-top: 12px; }
-
-    ul {
-      margin-top: 12px;
-      padding-left: 1.2rem;
-    }
-
-    li {
-      margin-top: 8px;
-    }
-
-    li strong { color: var(--text); font-weight: 600; }
-
-    .grid {
-      display: grid;
-      gap: 12px;
-      margin-top: 16px;
-    }
-
-    @media (min-width: 540px) {
-      .grid { grid-template-columns: 1fr 1fr; }
-    }
-
-    .card {
-      padding: 16px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: rgba(255, 255, 255, 0.03);
-    }
-
-    .card h3 {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 6px;
-    }
-
-    .card p {
-      font-size: 14px;
-      color: var(--muted);
-      margin: 0;
-    }
-
-    .supporter {
-      border-color: rgba(199, 168, 133, 0.25);
-    }
-
-    footer {
-      margin-top: 48px;
-      padding-top: 24px;
-      border-top: 1px solid var(--border);
-      font-size: 13px;
-      color: var(--muted);
-      text-align: center;
-    }
-
-    footer a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    footer a:hover { text-decoration: underline; }
-
-    footer p + p { margin-top: 8px; }
+    footer { margin-top: 48px; }
   </style>
 </head>
 <body>
@@ -272,13 +106,18 @@
     <footer>
       <p>Squart &copy; <span id="year"></span></p>
       <p>
-        <!-- Optional: add privacy policy URL for App Store compliance -->
-        <a href="mailto:sgazza@outlook.com">Contact</a>
+        <a href="support/">Support</a>
+        ·
+        <a id="contact-email" href="mailto:sgazza@outlook.com">Contact</a>
       </p>
     </footer>
   </main>
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
+
+    const SUPPORT_EMAIL = "sgazza@outlook.com";
+    document.getElementById("contact-email").href = "mailto:" + SUPPORT_EMAIL;
+    document.getElementById("contact-email").textContent = SUPPORT_EMAIL;
 
     // Set your App Store URL when available, e.g.:
     // const APP_STORE_URL = "https://apps.apple.com/app/idXXXXXXXXX";

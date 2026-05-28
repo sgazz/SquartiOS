@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Squart Support</title>
+  <meta name="description" content="Help, frequently asked questions, and contact for the Squart iOS board game.">
+  <meta name="theme-color" content="#121110">
+  <link rel="canonical" href="https://sgazz.github.io/SquartiOS/support/">
+  <link rel="stylesheet" href="../site.css">
+</head>
+<body>
+  <main class="wrap">
+    <nav class="top-nav" aria-label="Site">
+      <a href="../">← Squart home</a>
+    </nav>
+
+    <header>
+      <p class="eyebrow">Help &amp; contact</p>
+      <h1>Squart Support</h1>
+      <p class="lead">
+        Answers for gameplay, purchases, and technical issues.
+        Squart does not require an account; core play works offline.
+      </p>
+    </header>
+
+    <section id="contact">
+      <h2>Contact</h2>
+      <p>
+        For bugs, feedback, or purchase questions, email
+        <a class="inline" id="support-email" href="mailto:sgazza@outlook.com">sgazza@outlook.com</a>.
+      </p>
+      <p>Please include:</p>
+      <ul>
+        <li>Device model (e.g. iPhone 16, iPad)</li>
+        <li>iOS version (Settings → General → About)</li>
+        <li>Squart version, if shown in the app</li>
+        <li>What you expected vs. what happened</li>
+        <li>Steps to reproduce the issue</li>
+      </ul>
+    </section>
+
+    <section id="requirements">
+      <h2>Requirements</h2>
+      <ul>
+        <li><strong>Platform:</strong> iPhone and iPad</li>
+        <li><strong>iOS:</strong> iOS 18.6 or later</li>
+        <li><strong>Network:</strong> not required for gameplay; needed only for optional in-app purchase and restore</li>
+      </ul>
+    </section>
+
+    <section id="faq" class="faq">
+      <h2>Frequently asked questions</h2>
+
+      <details>
+        <summary>How do I play?</summary>
+        <p>
+          Two players alternate placing two-cell pieces. Horizontal places left-to-right;
+          Vertical places top-to-bottom. You win when your opponent cannot place a legal piece.
+          Try <strong>2D Board</strong> for clarity or <strong>3D Board</strong> for a spatial view.
+        </p>
+      </details>
+
+      <details>
+        <summary>Do I need an internet connection?</summary>
+        <p>
+          No. Local play, AI, and Daily Challenge work offline.
+          Internet is only used when loading or restoring the optional Squart Supporter purchase.
+        </p>
+      </details>
+
+      <details>
+        <summary>What is Squart Supporter?</summary>
+        <p>
+          A one-time in-app purchase that unlocks the <strong>Premium Theme Pack</strong>
+          (extra themes and matching app icons). All game modes remain free without it.
+        </p>
+      </details>
+
+      <details>
+        <summary>Premium themes are locked — how do I unlock them?</summary>
+        <p>
+          Open <strong>Settings → Support Development</strong> and purchase Squart Supporter,
+          or tap a locked theme in the theme picker to open the support screen.
+        </p>
+      </details>
+
+      <details>
+        <summary>I bought Supporter on another device. How do I restore?</summary>
+        <p>
+          Use the same Apple ID. In the app, open <strong>Settings → Support Development</strong>
+          and tap <strong>Restore Purchases</strong>. No extra charge applies for a valid prior purchase.
+        </p>
+      </details>
+
+      <details>
+        <summary>Restore did not unlock premium content</summary>
+        <p>
+          Confirm you are signed into the App Store with the Apple ID used for the original purchase.
+          Try Restore again on a stable connection. If it still fails, contact us with your device
+          details and approximate purchase date (no payment card details).
+        </p>
+      </details>
+
+      <details>
+        <summary>Alternate app icon will not change</summary>
+        <p>
+          iOS may restrict icon changes on some configurations. Premium icons require Squart Supporter.
+          If the icon stays on default after unlock, try again from Settings → App Icon, then restart the app.
+        </p>
+      </details>
+
+      <details>
+        <summary>Daily Challenge — same puzzle for everyone?</summary>
+        <p>
+          Each day uses a deterministic setup based on the UTC date, so all players see the same
+          challenge board for that day.
+        </p>
+      </details>
+    </section>
+
+    <section id="privacy-note">
+      <h2>Privacy</h2>
+      <p>
+        Squart does not require user accounts for play. Support email is used only to respond to
+        your message. See the app’s privacy policy in App Store Connect when published.
+      </p>
+    </section>
+
+    <footer>
+      <p>Squart &copy; <span id="year"></span></p>
+      <p>
+        <a href="../">App overview</a>
+        ·
+        <a id="footer-email" href="mailto:sgazza@outlook.com">Email support</a>
+      </p>
+    </footer>
+  </main>
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+    // Set your support address in one place when ready:
+    const SUPPORT_EMAIL = "sgazza@outlook.com";
+    const mailto = "mailto:" + SUPPORT_EMAIL;
+    document.getElementById("support-email").href = mailto;
+    document.getElementById("support-email").textContent = SUPPORT_EMAIL;
+    document.getElementById("footer-email").href = mailto;
+  </script>
+</body>
+</html>

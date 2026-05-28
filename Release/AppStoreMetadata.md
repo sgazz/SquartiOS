@@ -96,6 +96,12 @@ Use in-app feedback notes with:
 - Repository: https://github.com/sgazz/SquartiOS
 - Before submit: set App Store link and support email in `index.html`
 
+## Support URL
+
+- Static page: `marketing/support/index.html`
+- Live URL: **https://sgazz.github.io/SquartiOS/support/**
+- Before submit: set `SUPPORT_EMAIL` in `support/index.html` (and `index.html`)
+
 ## Category Recommendation
 - Primary: Games
 - Secondary: Board

@@ -20,14 +20,23 @@ Then visit `http://localhost:8080`.
    - Source: **Deploy from a branch**
    - Branch: **`gh-pages`**
    - Folder: **`/ (root)`**
-4. Marketing URL for App Store Connect:
+4. App Store Connect URLs:
 
-   **https://sgazz.github.io/SquartiOS/**
+   | Field | URL |
+   |-------|-----|
+   | Marketing URL | **https://sgazz.github.io/SquartiOS/** |
+   | Support URL | **https://sgazz.github.io/SquartiOS/support/** |
 
    Repository: [github.com/sgazz/SquartiOS](https://github.com/sgazz/SquartiOS)
 
 ## Before submit
 
 - [ ] Set `APP_STORE_URL` in `index.html` (or replace the `href` on the CTA).
-- [ ] Replace `support@example.com` with your real support email.
+- [ ] Set `SUPPORT_EMAIL` in `index.html` and `support/index.html`.
 - [ ] Add a Privacy Policy link in the footer if you publish one elsewhere.
+
+## Pages
+
+- `index.html` — marketing / overview
+- `support/index.html` — support & FAQ (App Store Support URL)
+- `site.css` — shared styles
