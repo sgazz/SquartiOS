@@ -102,6 +102,12 @@ Use in-app feedback notes with:
 - Live URL: **https://sgazz.github.io/SquartiOS/support/**
 - Before submit: set `SUPPORT_EMAIL` in `support/index.html` (and `index.html`)
 
+## Privacy Policy URL
+
+- Static page: `marketing/privacy/index.html`
+- Live URL: **https://sgazz.github.io/SquartiOS/privacy/**
+- Contact: sgazza@outlook.com
+
 ## Category Recommendation
 - Primary: Games
 - Secondary: Board

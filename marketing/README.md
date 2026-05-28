@@ -26,6 +26,7 @@ Then visit `http://localhost:8080`.
    |-------|-----|
    | Marketing URL | **https://sgazz.github.io/SquartiOS/** |
    | Support URL | **https://sgazz.github.io/SquartiOS/support/** |
+   | Privacy Policy URL | **https://sgazz.github.io/SquartiOS/privacy/** |
 
    Repository: [github.com/sgazz/SquartiOS](https://github.com/sgazz/SquartiOS)
 
@@ -39,4 +40,5 @@ Then visit `http://localhost:8080`.
 
 - `index.html` — marketing / overview
 - `support/index.html` — support & FAQ (App Store Support URL)
+- `privacy/index.html` — privacy policy (App Store Privacy Policy URL)
 - `site.css` — shared styles
