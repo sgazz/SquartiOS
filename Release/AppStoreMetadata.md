@@ -88,6 +88,13 @@ Use in-app feedback notes with:
   - Does not gate gameplay modes
 - If StoreKit product data is unavailable, app remains functional and stable.
 
+## Marketing URL
+
+- Static page: `marketing/index.html`
+- GitHub Pages: deploy the `/marketing` folder (see `marketing/README.md`)
+- Live URL: **https://sgazz.github.io/Squart/**
+- Before submit: set App Store link and support email in `index.html`
+
 ## Category Recommendation
 - Primary: Games
 - Secondary: Board

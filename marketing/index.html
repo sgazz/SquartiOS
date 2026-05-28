@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Squart — Quiet Tactical Board Game for iPhone &amp; iPad</title>
+  <meta name="description" content="Place two-cell pieces, deny space, and outlast your opponent. 2D and 3D boards, local PvP, AI, and a daily challenge. Calm strategy, no clutter.">
+  <meta name="theme-color" content="#121110">
+  <link rel="canonical" href="https://sgazz.github.io/Squart/">
+  <meta property="og:url" content="https://sgazz.github.io/Squart/">
+  <meta property="og:title" content="Squart — Quiet Tactical Board Game">
+  <meta property="og:description" content="Place two-cell pieces, deny space, and outlast your opponent. 2D and 3D boards, local PvP, AI, and a daily challenge.">
+  <style>
+    :root {
+      --bg-top: #121110;
+      --bg-mid: #1f1c1a;
+      --bg-bottom: #0d0d0d;
+      --panel: rgba(255, 255, 255, 0.055);
+      --border: rgba(255, 255, 255, 0.09);
+      --text: rgba(255, 255, 255, 0.94);
+      --body: rgba(255, 255, 255, 0.76);
+      --muted: rgba(255, 255, 255, 0.58);
+      --accent: #c7a885;
+      --accent-dim: #946e4d;
+      --button-text: #291f17;
+      --max: 720px;
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--body);
+      background: linear-gradient(145deg, var(--bg-top), var(--bg-mid) 45%, var(--bg-bottom));
+      min-height: 100vh;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 48px 24px 64px;
+    }
+
+    header {
+      margin-bottom: 56px;
+    }
+
+    .eyebrow {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: clamp(2.4rem, 8vw, 3.25rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      line-height: 1.08;
+      margin-bottom: 12px;
+    }
+
+    .tagline {
+      font-size: clamp(1.1rem, 3.5vw, 1.35rem);
+      color: var(--muted);
+      font-weight: 500;
+      max-width: 34ch;
+    }
+
+    .hero-copy {
+      margin-top: 24px;
+      font-size: 1.05rem;
+      max-width: 52ch;
+    }
+
+    .cta {
+      display: inline-block;
+      margin-top: 28px;
+      padding: 14px 28px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: var(--button-text);
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .cta:hover { transform: scale(0.98); opacity: 0.92; }
+    .cta[aria-disabled="true"] {
+      pointer-events: none;
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    .cta-note {
+      display: block;
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    section {
+      margin-bottom: 40px;
+      padding: 28px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(12px);
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 650;
+      color: var(--text);
+      margin-bottom: 14px;
+      letter-spacing: -0.02em;
+    }
+
+    p + p { margin-top: 12px; }
+
+    ul {
+      margin-top: 12px;
+      padding-left: 1.2rem;
+    }
+
+    li {
+      margin-top: 8px;
+    }
+
+    li strong { color: var(--text); font-weight: 600; }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    @media (min-width: 540px) {
+      .grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .card {
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .card h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .card p {
+      font-size: 14px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .supporter {
+      border-color: rgba(199, 168, 133, 0.25);
+    }
+
+    footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer a:hover { text-decoration: underline; }
+
+    footer p + p { margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <p class="eyebrow">iOS · Board · Strategy</p>
+      <h1>Squart</h1>
+      <p class="tagline">Quiet tactics of space and direction.</p>
+      <p class="hero-copy">
+        A minimalist strategy board game for iPhone and iPad.
+        Control the board before it closes in on you.
+      </p>
+      <!-- Replace href when the App Store listing is live -->
+      <a id="app-store-link" class="cta" href="#" aria-disabled="true">Download on the App Store</a>
+      <span class="cta-note">App Store link will appear at launch.</span>
+    </header>
+
+    <section id="about">
+      <h2>What is Squart?</h2>
+      <p>
+        Two players. Two-cell pieces. Different orientation rules:
+        <strong>Horizontal</strong> places left to right;
+        <strong>Vertical</strong> places top to bottom.
+      </p>
+      <p>
+        Every move removes options. You win when your opponent has nowhere left to play.
+      </p>
+      <p>No accounts. No noise. Just position, blocking, and decisions.</p>
+    </section>
+
+    <section id="features">
+      <h2>Play your way</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>2D Board</h3>
+          <p>Clean, immediate readability for fast tactical reads.</p>
+        </div>
+        <div class="card">
+          <h3>3D Board</h3>
+          <p>Spatial overview and a cinematic view of the grid.</p>
+        </div>
+        <div class="card">
+          <h3>Player vs Player</h3>
+          <p>Pass the device and play locally.</p>
+        </div>
+        <div class="card">
+          <h3>Player vs AI</h3>
+          <p>Easy, Medium, and Hard difficulties.</p>
+        </div>
+        <div class="card">
+          <h3>Daily Challenge</h3>
+          <p>A new deterministic puzzle every day.</p>
+        </div>
+        <div class="card">
+          <h3>Board options</h3>
+          <p>Multiple sizes and shapes — square, diamond, circle, triangle.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="calm">
+      <h2>Designed to stay calm</h2>
+      <p>
+        Squart is built as a premium tactical experience: focused UI, thoughtful pacing,
+        and gameplay that respects your attention.
+      </p>
+      <p><strong>Core modes are fully playable without purchase.</strong> No account required. Core gameplay works offline.</p>
+    </section>
+
+    <section id="supporter" class="supporter">
+      <h2>Squart Supporter</h2>
+      <p>
+        Optional in-app purchase: unlock the <strong>Premium Theme Pack</strong> —
+        extra visual themes and matching app icons.
+      </p>
+      <p>Gameplay is never locked behind a paywall.</p>
+    </section>
+
+    <footer>
+      <p>Squart &copy; <span id="year"></span></p>
+      <p>
+        <!-- Optional: add privacy policy URL for App Store compliance -->
+        <a href="mailto:support@example.com">Contact</a>
+      </p>
+    </footer>
+  </main>
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // Set your App Store URL when available, e.g.:
+    // const APP_STORE_URL = "https://apps.apple.com/app/idXXXXXXXXX";
+    const APP_STORE_URL = "";
+
+    const link = document.getElementById("app-store-link");
+    const note = document.querySelector(".cta-note");
+    if (APP_STORE_URL) {
+      link.href = APP_STORE_URL;
+      link.removeAttribute("aria-disabled");
+      note.textContent = "Available on the App Store.";
+    }
+  </script>
+</body>
+</html>
