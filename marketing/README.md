@@ -14,12 +14,13 @@ Then visit `http://localhost:8080`.
 
 ## GitHub Pages
 
-1. Push this repo to GitHub.
-2. **Settings → Pages → Build and deployment**
+1. Push this repo to GitHub ([sgazz/SquartiOS](https://github.com/sgazz/SquartiOS)).
+2. Run workflow **Deploy marketing site** once (Actions → workflow → Run workflow), or push to `main`.
+3. **Settings → Pages → Build and deployment**
    - Source: **Deploy from a branch**
-   - Branch: `main` (or your default)
-   - Folder: **`/marketing`**
-3. Marketing URL for App Store Connect:
+   - Branch: **`gh-pages`**
+   - Folder: **`/ (root)`**
+4. Marketing URL for App Store Connect:
 
    **https://sgazz.github.io/SquartiOS/**
 
