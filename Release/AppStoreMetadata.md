@@ -91,7 +91,7 @@ Use in-app feedback notes with:
 ## Marketing URL
 
 - Static page: `marketing/index.html`
-- GitHub Pages: deploy the `/marketing` folder (see `marketing/README.md`)
+- GitHub Pages: workflow deploys `marketing/` to `gh-pages` branch (see `marketing/README.md`)
 - Live URL: **https://sgazz.github.io/SquartiOS/**
 - Repository: https://github.com/sgazz/SquartiOS
 - Before submit: set App Store link and support email in `index.html`
