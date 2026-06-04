@@ -3,6 +3,8 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.squartPalette) private var palette
+    @EnvironmentObject private var storeManager: StoreManager
+    @EnvironmentObject private var iconManager: AppIconManager
     @State private var settings: AppSettings
     @State private var isShowingThemes = false
 
@@ -39,6 +41,10 @@ struct SettingsView: View {
                             )
                         }
                         .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.99, pressedOpacity: 0.88))
+
+                        #if DEBUG
+                        DebugPremiumSettingsSection()
+                        #endif
                     }
                 }
                 .padding(28)
@@ -139,4 +145,6 @@ struct SettingsView: View {
 
 #Preview {
     SettingsView()
+        .environmentObject(StoreManager.shared)
+        .environmentObject(AppIconManager.shared)
 }

@@ -7,6 +7,9 @@ struct ThemePickerView: View {
     @State private var selectedTheme: SquartVisualTheme
     @State private var isShowingPremiumPurchase = false
     @State private var pendingPremiumTheme: SquartVisualTheme?
+    #if DEBUG
+    @AppStorage(DebugPremiumUnlock.userDefaultsKey) private var debugUnlockPremium = false
+    #endif
 
     private let store: SquartThemeStore
 
@@ -56,6 +59,9 @@ struct ThemePickerView: View {
         .environment(\.squartPalette, palette)
         .animation(SquartTheme.themeTransitionAnimation, value: selectedTheme)
         .animation(SquartTheme.themeTransitionAnimation, value: storeManager.purchasedProductIDs)
+        #if DEBUG
+        .animation(SquartTheme.themeTransitionAnimation, value: debugUnlockPremium)
+        #endif
         .animation(SquartTheme.themeTransitionAnimation, value: iconManager.selectedTheme)
         .onAppear {
             selectedTheme = store.loadSelectedTheme(access: access)
@@ -74,6 +80,16 @@ struct ThemePickerView: View {
             iconManager.refreshSelectedTheme(access: access)
             applyPendingPremiumSelectionIfNeeded()
         }
+        #if DEBUG
+        .onChange(of: debugUnlockPremium) { _, _ in
+            selectedTheme = store.sanitizeSelectedTheme(access: access)
+            iconManager.refreshSelectedTheme(access: access)
+            Task {
+                await iconManager.enforceAccessibleIcon(access: access)
+            }
+            applyPendingPremiumSelectionIfNeeded()
+        }
+        #endif
         .sheet(isPresented: $isShowingPremiumPurchase) {
             PremiumThemesPurchaseView()
                 .presentationDetents([.medium])
@@ -82,7 +98,19 @@ struct ThemePickerView: View {
     }
 
     private var access: ThemeAccess {
+        #if DEBUG
+        DebugPremiumUnlock.makeThemeAccess(purchasedProductIDs: storeManager.purchasedProductIDs)
+        #else
         ThemeAccess(purchasedProductIDs: storeManager.purchasedProductIDs)
+        #endif
+    }
+
+    private var hasPremiumEntitlement: Bool {
+        #if DEBUG
+        DebugPremiumUnlock.grantsPremiumEntitlement(supporterPurchased: storeManager.isSupporterPurchased)
+        #else
+        storeManager.isSupporterPurchased
+        #endif
     }
 
     private var appIconSection: some View {
@@ -93,7 +121,7 @@ struct ThemePickerView: View {
                 .textCase(.uppercase)
                 .tracking(0.6)
 
-            if !storeManager.isSupporterPurchased {
+            if !hasPremiumEntitlement {
                 Text("One purchase unlocks premium themes and alternate app icons.")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(selectedTheme.palette.mutedText)

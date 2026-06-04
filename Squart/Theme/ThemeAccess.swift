@@ -8,6 +8,13 @@ nonisolated struct ThemeAccess {
     }
 
     func canUse(_ theme: SquartVisualTheme) -> Bool {
+        #if DEBUG
+        // DEBUG ONLY PREMIUM OVERRIDE
+        if DebugPremiumUnlock.isEnabled {
+            return true
+        }
+        #endif
+
         let isAllowed = !theme.isPremium || purchasedProductIDs.contains(StoreProduct.supporter.id)
         #if DEBUG
         if theme.isPremium {

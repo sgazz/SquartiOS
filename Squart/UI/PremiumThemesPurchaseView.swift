@@ -5,6 +5,9 @@ struct PremiumThemesPurchaseView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.squartPalette) private var palette
     @EnvironmentObject private var storeManager: StoreManager
+    #if DEBUG
+    @AppStorage(DebugPremiumUnlock.userDefaultsKey) private var debugUnlockPremium = false
+    #endif
 
     var body: some View {
         ZStack {
@@ -36,7 +39,7 @@ struct PremiumThemesPurchaseView: View {
                             Text(purchaseButtonTitle)
                         }
                         .buttonStyle(SquartPrimaryButtonStyle(width: 260))
-                        .disabled(storeManager.supporterProduct == nil || storeManager.isSupporterPurchased)
+                        .disabled(storeManager.supporterProduct == nil || hasPremiumEntitlement)
 
                         Button {
                             Task {
@@ -69,6 +72,19 @@ struct PremiumThemesPurchaseView: View {
             #endif
             dismissIfAlreadyUnlocked()
         }
+        #if DEBUG
+        .onChange(of: debugUnlockPremium) { _, _ in
+            dismissIfAlreadyUnlocked()
+        }
+        #endif
+    }
+
+    private var hasPremiumEntitlement: Bool {
+        #if DEBUG
+        DebugPremiumUnlock.grantsPremiumEntitlement(supporterPurchased: storeManager.isSupporterPurchased)
+        #else
+        storeManager.isSupporterPurchased
+        #endif
     }
 
     private var header: some View {
@@ -107,7 +123,7 @@ struct PremiumThemesPurchaseView: View {
     }
 
     private var purchaseButtonTitle: String {
-        if storeManager.isSupporterPurchased {
+        if hasPremiumEntitlement {
             return "Already Unlocked"
         }
 
@@ -119,7 +135,7 @@ struct PremiumThemesPurchaseView: View {
     }
 
     private func dismissIfAlreadyUnlocked() {
-        guard storeManager.isSupporterPurchased else {
+        guard hasPremiumEntitlement else {
             return
         }
         dismiss()

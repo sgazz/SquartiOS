@@ -18,6 +18,7 @@ struct RootView: View {
     @AppStorage(SquartThemeStore.selectedThemeIDKey) private var selectedThemeID = SquartVisualTheme.defaultTheme.id
     #if DEBUG
     @State private var screenshotConfiguration: ScreenshotConfiguration?
+    @AppStorage(DebugPremiumUnlock.userDefaultsKey) private var debugUnlockPremium = false
     #endif
 
     var body: some View {
@@ -150,6 +151,15 @@ struct RootView: View {
                 await iconManager.enforceAccessibleIcon(access: themeAccess)
             }
         }
+        #if DEBUG
+        .onChange(of: debugUnlockPremium) { _, _ in
+            sanitizeSelectedTheme()
+            iconManager.refreshSelectedTheme(access: themeAccess)
+            Task {
+                await iconManager.enforceAccessibleIcon(access: themeAccess)
+            }
+        }
+        #endif
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             Task {
@@ -166,7 +176,11 @@ struct RootView: View {
     }
 
     private var themeAccess: ThemeAccess {
+        #if DEBUG
+        DebugPremiumUnlock.makeThemeAccess(purchasedProductIDs: storeManager.purchasedProductIDs)
+        #else
         ThemeAccess(purchasedProductIDs: storeManager.purchasedProductIDs)
+        #endif
     }
 
     private func sanitizeSelectedTheme() {
