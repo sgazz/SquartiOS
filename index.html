@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Squart — Quiet Tactical Board Game for iPhone &amp; iPad</title>
+  <meta name="description" content="Place two-cell pieces, deny space, and outlast your opponent. 2D and 3D boards, local PvP, AI, and a daily challenge. Calm strategy, no clutter.">
+  <meta name="theme-color" content="#121110">
+  <link rel="canonical" href="https://sgazz.github.io/SquartiOS/">
+  <meta property="og:url" content="https://sgazz.github.io/SquartiOS/">
+  <meta property="og:title" content="Squart — Quiet Tactical Board Game">
+  <meta property="og:description" content="Place two-cell pieces, deny space, and outlast your opponent. 2D and 3D boards, local PvP, AI, and a daily challenge.">
+  <link rel="stylesheet" href="site.css">
+  <style>
+    header { margin-bottom: 56px; }
+    h1 {
+      font-size: clamp(2.4rem, 8vw, 3.25rem);
+      line-height: 1.08;
+      margin-bottom: 12px;
+    }
+    section { margin-bottom: 40px; }
+    .cta[aria-disabled="true"] {
+      pointer-events: none;
+      opacity: 0.55;
+      cursor: default;
+    }
+    footer { margin-top: 48px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <p class="eyebrow">iOS · Board · Strategy</p>
+      <h1>Squart</h1>
+      <p class="tagline">Quiet tactics of space and direction.</p>
+      <p class="hero-copy">
+        A minimalist strategy board game for iPhone and iPad.
+        Control the board before it closes in on you.
+      </p>
+      <!-- Replace href when the App Store listing is live -->
+      <a id="app-store-link" class="cta" href="#" aria-disabled="true">Download on the App Store</a>
+      <span class="cta-note">App Store link will appear at launch.</span>
+    </header>
+
+    <section id="about">
+      <h2>What is Squart?</h2>
+      <p>
+        Two players. Two-cell pieces. Different orientation rules:
+        <strong>Horizontal</strong> places left to right;
+        <strong>Vertical</strong> places top to bottom.
+      </p>
+      <p>
+        Every move removes options. You win when your opponent has nowhere left to play.
+      </p>
+      <p>No accounts. No noise. Just position, blocking, and decisions.</p>
+    </section>
+
+    <section id="features">
+      <h2>Play your way</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>2D Board</h3>
+          <p>Clean, immediate readability for fast tactical reads.</p>
+        </div>
+        <div class="card">
+          <h3>3D Board</h3>
+          <p>Spatial overview and a cinematic view of the grid.</p>
+        </div>
+        <div class="card">
+          <h3>Player vs Player</h3>
+          <p>Pass the device and play locally.</p>
+        </div>
+        <div class="card">
+          <h3>Player vs AI</h3>
+          <p>Easy, Medium, and Hard difficulties.</p>
+        </div>
+        <div class="card">
+          <h3>Daily Challenge</h3>
+          <p>A new deterministic puzzle every day.</p>
+        </div>
+        <div class="card">
+          <h3>Board options</h3>
+          <p>Multiple sizes and shapes — square, diamond, circle, triangle.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="calm">
+      <h2>Designed to stay calm</h2>
+      <p>
+        Squart is built as a premium tactical experience: focused UI, thoughtful pacing,
+        and gameplay that respects your attention.
+      </p>
+      <p><strong>Core modes are fully playable without purchase.</strong> No account required. Core gameplay works offline.</p>
+    </section>
+
+    <section id="supporter" class="supporter">
+      <h2>Squart Supporter</h2>
+      <p>
+        Optional in-app purchase: unlock the <strong>Premium Theme Pack</strong> —
+        extra visual themes and matching app icons.
+      </p>
+      <p>Gameplay is never locked behind a paywall.</p>
+    </section>
+
+    <footer>
+      <p>Squart &copy; <span id="year"></span></p>
+      <p>
+        <a href="support/">Support</a>
+        ·
+        <a href="privacy/">Privacy</a>
+        ·
+        <a id="contact-email" href="mailto:sgazza@outlook.com">Contact</a>
+      </p>
+    </footer>
+  </main>
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    const SUPPORT_EMAIL = "sgazza@outlook.com";
+    document.getElementById("contact-email").href = "mailto:" + SUPPORT_EMAIL;
+    document.getElementById("contact-email").textContent = SUPPORT_EMAIL;
+
+    // Set your App Store URL when available, e.g.:
+    // const APP_STORE_URL = "https://apps.apple.com/app/idXXXXXXXXX";
+    const APP_STORE_URL = "";
+
+    const link = document.getElementById("app-store-link");
+    const note = document.querySelector(".cta-note");
+    if (APP_STORE_URL) {
+      link.href = APP_STORE_URL;
+      link.removeAttribute("aria-disabled");
+      note.textContent = "Available on the App Store.";
+    }
+  </script>
+</body>
+</html>
