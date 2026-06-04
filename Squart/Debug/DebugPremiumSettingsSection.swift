@@ -6,7 +6,7 @@ struct DebugPremiumSettingsSection: View {
     @Environment(\.squartPalette) private var palette
     @EnvironmentObject private var storeManager: StoreManager
     @EnvironmentObject private var iconManager: AppIconManager
-    @AppStorage(DebugPremiumUnlock.userDefaultsKey) private var debugUnlockPremium = false
+    @AppStorage(DebugPremiumUnlockKey.userDefaultsKey) private var debugUnlockPremium = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -21,7 +21,7 @@ struct DebugPremiumSettingsSection: View {
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(palette.strongText)
 
-                    Text("Simulates a supporter purchase in Debug builds only.")
+                    Text("Simulates a premium purchase in Debug builds only.")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(palette.mutedText)
                         .fixedSize(horizontal: false, vertical: true)

@@ -40,8 +40,8 @@ Every move removes options. You win by leaving your opponent without a legal pla
 - Multiple board shapes and board sizes
 - Refined touch controls, previews, and camera tools
 
-### Squart Supporter (In-App Purchase)
-Squart Supporter unlocks the Premium Theme Pack.  
+### Premium Themes & Icons (In-App Purchase)
+Premium Themes & Icons unlocks all premium themes and alternate app icons.  
 All gameplay modes remain fully available without purchase.
 
 Designed as a calm, premium tactical experience: no noise, no clutter, just decisions.
@@ -57,12 +57,12 @@ Designed as a calm, premium tactical experience: no noise, no clutter, just deci
 - Local PvP and Player vs AI
 - AI difficulties: Easy, Medium, Hard
 - Daily Challenge
-- Premium Theme Pack support via Squart Supporter
+- Premium Themes & Icons in-app purchase
 - Polished tactical interface and board presentation
 
-## In-App Purchase Description (Squart Supporter)
-Support Squart development and unlock the Premium Theme Pack.  
-Gameplay content remains fully available for all players.
+## In-App Purchase Description (Premium Themes & Icons)
+Unlock all premium themes and alternate app icons with a one-time purchase.  
+Thank you for supporting Squart. Gameplay content remains fully available for all players.
 
 ## TestFlight Beta Notes
 Thank you for testing Squart.
@@ -82,9 +82,9 @@ Use in-app feedback notes with:
 - App works fully without account creation.
 - Network connectivity is not required for core gameplay.
 - In-App Purchase:
-  - Product ID: `squart.supporter`
+  - Product ID: `squart.premium`
   - Type: non-consumable
-  - Unlocks Premium Theme Pack only
+  - Unlocks premium themes and alternate app icons only
   - Does not gate gameplay modes
 - If StoreKit product data is unavailable, app remains functional and stable.
 

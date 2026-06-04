@@ -6,7 +6,7 @@ struct PremiumThemesPurchaseView: View {
     @Environment(\.squartPalette) private var palette
     @EnvironmentObject private var storeManager: StoreManager
     #if DEBUG
-    @AppStorage(DebugPremiumUnlock.userDefaultsKey) private var debugUnlockPremium = false
+    @AppStorage(DebugPremiumUnlockKey.userDefaultsKey) private var debugUnlockPremium = false
     #endif
 
     var body: some View {
@@ -81,7 +81,7 @@ struct PremiumThemesPurchaseView: View {
 
     private var hasPremiumEntitlement: Bool {
         #if DEBUG
-        DebugPremiumUnlock.grantsPremiumEntitlement(supporterPurchased: storeManager.isSupporterPurchased)
+        DebugPremiumUnlock.grantsPremiumEntitlement(premiumPurchased: storeManager.isSupporterPurchased)
         #else
         storeManager.isSupporterPurchased
         #endif

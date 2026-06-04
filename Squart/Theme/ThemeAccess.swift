@@ -15,10 +15,10 @@ nonisolated struct ThemeAccess {
         }
         #endif
 
-        let isAllowed = !theme.isPremium || purchasedProductIDs.contains(StoreProduct.supporter.id)
+        let isAllowed = !theme.isPremium || purchasedProductIDs.contains(StoreProduct.premium.id)
         #if DEBUG
         if theme.isPremium {
-            print("[SquartStore] ThemeAccess canUse theme=\(theme.id) allowed=\(isAllowed) supporterOwned=\(purchasedProductIDs.contains(StoreProduct.supporter.id))")
+            print("[SquartStore] ThemeAccess canUse theme=\(theme.id) allowed=\(isAllowed) premiumOwned=\(purchasedProductIDs.contains(StoreProduct.premium.id))")
         }
         #endif
         return isAllowed

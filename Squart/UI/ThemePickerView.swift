@@ -8,7 +8,7 @@ struct ThemePickerView: View {
     @State private var isShowingPremiumPurchase = false
     @State private var pendingPremiumTheme: SquartVisualTheme?
     #if DEBUG
-    @AppStorage(DebugPremiumUnlock.userDefaultsKey) private var debugUnlockPremium = false
+    @AppStorage(DebugPremiumUnlockKey.userDefaultsKey) private var debugUnlockPremium = false
     #endif
 
     private let store: SquartThemeStore
@@ -107,7 +107,7 @@ struct ThemePickerView: View {
 
     private var hasPremiumEntitlement: Bool {
         #if DEBUG
-        DebugPremiumUnlock.grantsPremiumEntitlement(supporterPurchased: storeManager.isSupporterPurchased)
+        DebugPremiumUnlock.grantsPremiumEntitlement(premiumPurchased: storeManager.isSupporterPurchased)
         #else
         storeManager.isSupporterPurchased
         #endif

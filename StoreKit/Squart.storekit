@@ -8,13 +8,13 @@
       "internalID": "4A41B364-EB55-4C21-8E12-DA3F8B119E24",
       "localizations": [
         {
-          "description": "Unlock the Premium Theme Pack and support Squart development.",
-          "displayName": "Squart Supporter",
+          "description": "Unlock all premium themes and alternate app icons with a one-time purchase.",
+          "displayName": "Premium Themes & Icons",
           "locale": "en_US"
         }
       ],
-      "productID": "squart.supporter",
-      "referenceName": "Squart Supporter",
+      "productID": "squart.premium",
+      "referenceName": "Premium Themes & Icons",
       "type": "NonConsumable"
     }
   ],

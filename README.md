@@ -12,7 +12,7 @@ Squart is a native iOS tactical board game prototype built with SwiftUI and Scen
   - Shapes: Square, Diamond, Circle, Triangle
   - Configurable blocker ratio
 - Daily Challenge (deterministic per UTC day)
-- Premium visual themes with StoreKit 2 supporter unlock
+- Premium visual themes with StoreKit 2 unlock
 - Alternate app icon infrastructure
 - Haptics and sound-effect scaffold
 
@@ -52,6 +52,6 @@ xcodebuild test -project Squart.xcodeproj -scheme Squart -destination 'platform=
 
 ## StoreKit Product
 
-- Non-consumable: `squart.supporter`
+- Non-consumable: `squart.premium`
 
-Gameplay is fully available without purchase; supporter unlocks premium cosmetic content.
+Gameplay is fully available without purchase; premium unlocks premium themes and alternate app icons.

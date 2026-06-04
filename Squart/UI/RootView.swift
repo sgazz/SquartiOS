@@ -18,7 +18,7 @@ struct RootView: View {
     @AppStorage(SquartThemeStore.selectedThemeIDKey) private var selectedThemeID = SquartVisualTheme.defaultTheme.id
     #if DEBUG
     @State private var screenshotConfiguration: ScreenshotConfiguration?
-    @AppStorage(DebugPremiumUnlock.userDefaultsKey) private var debugUnlockPremium = false
+    @AppStorage(DebugPremiumUnlockKey.userDefaultsKey) private var debugUnlockPremium = false
     #endif
 
     var body: some View {

@@ -37,11 +37,11 @@ final class StoreManager: ObservableObject {
     }
 
     var supporterProduct: Product? {
-        products.first { $0.id == StoreProduct.supporter.id }
+        products.first { $0.id == StoreProduct.premium.id }
     }
 
     var isSupporterPurchased: Bool {
-        purchasedProductIDs.contains(StoreProduct.supporter.id)
+        purchasedProductIDs.contains(StoreProduct.premium.id)
     }
 
     func loadProducts() async {
@@ -59,13 +59,13 @@ final class StoreManager: ObservableObject {
             #endif
 
             if products.isEmpty {
-                statusMessage = "Support options are not available yet."
+                statusMessage = "Premium Themes & Icons is not available yet."
             } else {
                 statusMessage = nil
             }
         } catch {
             products = []
-            statusMessage = "Could not load support options."
+            statusMessage = "Could not load Premium Themes & Icons."
         }
     }
 
@@ -74,9 +74,9 @@ final class StoreManager: ObservableObject {
         print("[SquartStore] purchase tapped")
         #endif
         guard let product = supporterProduct else {
-            statusMessage = "Supporter purchase is not available yet."
+            statusMessage = "Premium Themes & Icons is not available yet."
             #if DEBUG
-            print("[SquartStore] purchase blocked: supporter product unavailable")
+            print("[SquartStore] purchase blocked: premium product unavailable")
             #endif
             return
         }
@@ -123,9 +123,9 @@ final class StoreManager: ObservableObject {
         do {
             try await AppStore.sync()
             await refreshPurchasedProducts(policy: .strict)
-            statusMessage = isSupporterPurchased ? "Purchase restored." : "No supporter purchase was found."
+            statusMessage = isSupporterPurchased ? "Purchase restored." : "No premium purchase was found."
             #if DEBUG
-            print("[SquartStore] restore completed supporter=\(isSupporterPurchased)")
+            print("[SquartStore] restore completed premium=\(isSupporterPurchased)")
             #endif
         } catch {
             statusMessage = "Restore failed. Please try again later."
@@ -245,7 +245,7 @@ final class StoreManager: ObservableObject {
     }
 
     private func isLocallyPersistentNonConsumable(productID: String) -> Bool {
-        productID == StoreProduct.supporter.id
+        productID == StoreProduct.premium.id
     }
 }
 

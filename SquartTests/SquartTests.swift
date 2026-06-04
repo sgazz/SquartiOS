@@ -469,7 +469,7 @@ final class SquartTests: XCTestCase {
         }
 
         let store = SquartThemeStore(defaults: defaults)
-        let access = ThemeAccess(purchasedProductIDs: [StoreProduct.supporter.id])
+        let access = ThemeAccess(purchasedProductIDs: [StoreProduct.premium.id])
 
         store.saveSelectedTheme(.forest)
 
@@ -512,28 +512,28 @@ final class SquartTests: XCTestCase {
         XCTAssertTrue(SquartVisualTheme.bronzeNight.isPremium)
     }
 
-    func testThemeAccessRequiresSupporterForPremiumThemes() {
+    func testThemeAccessRequiresPremiumForPremiumThemes() {
         XCTAssertTrue(ThemeAccess.free.canUse(.cappuccino))
         XCTAssertFalse(ThemeAccess.free.canUse(.obsidian))
 
-        let supporterAccess = ThemeAccess(purchasedProductIDs: [StoreProduct.supporter.id])
+        let premiumAccess = ThemeAccess(purchasedProductIDs: [StoreProduct.premium.id])
 
-        XCTAssertTrue(supporterAccess.canUse(.obsidian))
-        XCTAssertTrue(supporterAccess.canUse(.ivory))
-        XCTAssertTrue(supporterAccess.canUse(.forest))
-        XCTAssertTrue(supporterAccess.canUse(.bronzeNight))
+        XCTAssertTrue(premiumAccess.canUse(.obsidian))
+        XCTAssertTrue(premiumAccess.canUse(.ivory))
+        XCTAssertTrue(premiumAccess.canUse(.forest))
+        XCTAssertTrue(premiumAccess.canUse(.bronzeNight))
     }
 
     func testThemeAccessAppliesToPremiumAppIcons() {
         XCTAssertTrue(ThemeAccess.free.canUseAppIcon(for: .cappuccino))
         XCTAssertFalse(ThemeAccess.free.canUseAppIcon(for: .obsidian))
 
-        let supporterAccess = ThemeAccess(purchasedProductIDs: [StoreProduct.supporter.id])
+        let premiumAccess = ThemeAccess(purchasedProductIDs: [StoreProduct.premium.id])
 
-        XCTAssertTrue(supporterAccess.canUseAppIcon(for: .obsidian))
-        XCTAssertTrue(supporterAccess.canUseAppIcon(for: .ivory))
-        XCTAssertTrue(supporterAccess.canUseAppIcon(for: .forest))
-        XCTAssertTrue(supporterAccess.canUseAppIcon(for: .bronzeNight))
+        XCTAssertTrue(premiumAccess.canUseAppIcon(for: .obsidian))
+        XCTAssertTrue(premiumAccess.canUseAppIcon(for: .ivory))
+        XCTAssertTrue(premiumAccess.canUseAppIcon(for: .forest))
+        XCTAssertTrue(premiumAccess.canUseAppIcon(for: .bronzeNight))
     }
 
     func testAppIconNameMappingMatchesThemes() {

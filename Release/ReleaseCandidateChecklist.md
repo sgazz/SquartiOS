@@ -17,7 +17,7 @@ Owner: __________
 - [ ] Persistence tests pass (setup/theme/settings)
 
 ## 3) StoreKit Readiness
-- [ ] Product ID confirmed: `squart.supporter`
+- [ ] Product ID confirmed: `squart.premium`
 - [ ] Local StoreKit config usable for validation
 - [ ] Purchase path safe when product unavailable
 - [ ] Restore purchases path verified

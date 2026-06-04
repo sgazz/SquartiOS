@@ -2,33 +2,37 @@
 import Foundation
 
 // DEBUG ONLY PREMIUM OVERRIDE
-enum DebugPremiumUnlock {
+nonisolated enum DebugPremiumUnlockKey {
     static let userDefaultsKey = "debug.unlockPremium"
+}
 
-    static var isEnabled: Bool {
-        UserDefaults.standard.bool(forKey: userDefaultsKey)
+enum DebugPremiumUnlock {
+    nonisolated(unsafe) private static let defaults = UserDefaults.standard
+
+    nonisolated static var isEnabled: Bool {
+        defaults.bool(forKey: DebugPremiumUnlockKey.userDefaultsKey)
     }
 
     static func setEnabled(_ enabled: Bool) {
-        UserDefaults.standard.set(enabled, forKey: userDefaultsKey)
+        defaults.set(enabled, forKey: DebugPremiumUnlockKey.userDefaultsKey)
     }
 
-    /// Merges supporter entitlement when the debug override is active. StoreKit IDs are unchanged.
-    static func effectivePurchasedProductIDs(_ purchasedProductIDs: Set<String>) -> Set<String> {
+    /// Merges premium entitlement when the debug override is active. StoreKit IDs are unchanged.
+    nonisolated static func effectivePurchasedProductIDs(_ purchasedProductIDs: Set<String>) -> Set<String> {
         guard isEnabled else {
             return purchasedProductIDs
         }
 
         var ids = purchasedProductIDs
-        ids.insert(StoreProduct.supporter.id)
+        ids.insert(StoreProduct.premium.id)
         return ids
     }
 
-    static func grantsPremiumEntitlement(supporterPurchased: Bool) -> Bool {
-        isEnabled || supporterPurchased
+    nonisolated static func grantsPremiumEntitlement(premiumPurchased: Bool) -> Bool {
+        isEnabled || premiumPurchased
     }
 
-    static func makeThemeAccess(purchasedProductIDs: Set<String>) -> ThemeAccess {
+    nonisolated static func makeThemeAccess(purchasedProductIDs: Set<String>) -> ThemeAccess {
         ThemeAccess(purchasedProductIDs: effectivePurchasedProductIDs(purchasedProductIDs))
     }
 }

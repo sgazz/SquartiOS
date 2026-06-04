@@ -20,7 +20,7 @@ Owner: __________
 - [ ] Test instructions shared (focus areas + known limits)
 
 ## 4) Purchase Flow Validation (Sandbox)
-- [ ] `squart.supporter` purchase flow tested
+- [ ] `squart.premium` purchase flow tested
 - [ ] Restore purchases tested
 - [ ] App remains stable when StoreKit data unavailable
 - [ ] Premium theme unlock state updates correctly

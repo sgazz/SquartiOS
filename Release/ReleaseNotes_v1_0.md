@@ -18,8 +18,8 @@ Squart v1.0 delivers a calm, tactical board-game experience centered on space co
 
 ## Commerce
 - StoreKit 2 integration foundation
-- Non-consumable support product: `squart.supporter`
-- Supporter unlocks Premium Theme Pack
+- Non-consumable product: `squart.premium`
+- Premium Themes & Icons unlocks premium themes and alternate app icons
 - Core gameplay remains available without purchase
 
 ## Tactical Identity (Core Experience)
