@@ -4,9 +4,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.squartPalette) private var palette
     @State private var settings: AppSettings
-    @State private var isShowingSupportDevelopment = false
     @State private var isShowingThemes = false
-    @State private var isShowingAppIcons = false
 
     private let store: AppSettingsStore
 
@@ -36,30 +34,8 @@ struct SettingsView: View {
                         } label: {
                             settingsRow(
                                 icon: "paintpalette",
-                                title: "Themes",
-                                subtitle: "Choose Squart's visual mood."
-                            )
-                        }
-                        .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.99, pressedOpacity: 0.88))
-
-                        Button {
-                            isShowingAppIcons = true
-                        } label: {
-                            settingsRow(
-                                icon: "app.badge",
-                                title: "App Icons",
-                                subtitle: "Match the Home Screen icon to your theme."
-                            )
-                        }
-                        .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.99, pressedOpacity: 0.88))
-
-                        Button {
-                            isShowingSupportDevelopment = true
-                        } label: {
-                            settingsRow(
-                                icon: "heart",
-                                title: "Support Development",
-                                subtitle: "Optional one-time support for Squart."
+                                title: "Themes & Icons",
+                                subtitle: "Premium themes and matching app icons."
                             )
                         }
                         .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.99, pressedOpacity: 0.88))
@@ -68,18 +44,8 @@ struct SettingsView: View {
                 .padding(28)
             }
         }
-        .sheet(isPresented: $isShowingSupportDevelopment) {
-            SupportDevelopmentView()
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-        }
         .sheet(isPresented: $isShowingThemes) {
             ThemePickerView()
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-        }
-        .sheet(isPresented: $isShowingAppIcons) {
-            AppIconPickerView()
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }

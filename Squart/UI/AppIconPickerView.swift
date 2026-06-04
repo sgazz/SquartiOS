@@ -1,117 +1,33 @@
 import SwiftUI
 
-struct AppIconPickerView: View {
-    @Environment(\.dismiss) private var dismiss
+struct AppIconThemeRow: View {
     @Environment(\.squartPalette) private var palette
-    @EnvironmentObject private var storeManager: StoreManager
-    @EnvironmentObject private var iconManager: AppIconManager
-    @State private var isShowingSupportDevelopment = false
+
+    let theme: SquartVisualTheme
+    let isSelected: Bool
+    let isLocked: Bool
+    let onSelect: () -> Void
 
     var body: some View {
-        ZStack {
-            palette.sheetBackground
-                .ignoresSafeArea()
-
-            VStack(alignment: .leading, spacing: 22) {
-                header
-
-                Text("Choose an app icon manually. Premium icons are included with Squart Supporter.")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(palette.mutedText)
-                    .padding(.horizontal, 2)
-
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 12) {
-                        ForEach(SquartVisualTheme.allCases) { theme in
-                            iconRow(for: theme)
-                        }
-                    }
-                    .padding(.bottom, 6)
-                }
-
-                if let statusMessage = iconManager.statusMessage {
-                    Text(statusMessage)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(palette.mutedText)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            .padding(28)
-        }
-        .task {
-            await storeManager.refreshPurchasedProducts()
-            iconManager.refreshSelectedTheme(access: access)
-        }
-        .onChange(of: storeManager.purchasedProductIDs) { _, _ in
-            #if DEBUG
-            print("[SquartStore] AppIconPickerView observed purchasedProductIDs=\(storeManager.purchasedProductIDs.sorted())")
-            #endif
-            iconManager.refreshSelectedTheme(access: access)
-        }
-        .sheet(isPresented: $isShowingSupportDevelopment) {
-            SupportDevelopmentView()
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-        }
-    }
-
-    private var access: ThemeAccess {
-        ThemeAccess(purchasedProductIDs: storeManager.purchasedProductIDs)
-    }
-
-    private var header: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("App Icons")
-                    .font(SquartTheme.titleFont(size: 28))
-                    .foregroundStyle(palette.primaryText)
-
-                Text("Match Squart to your selected visual mood.")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(palette.mutedText)
-            }
-
-            Spacer()
-
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(palette.bodyText)
-                    .frame(width: 34, height: 34)
-                    .background(Circle().fill(palette.panel))
-            }
-            .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.94, pressedOpacity: 0.82))
-            .accessibilityLabel("Close app icons")
-        }
-    }
-
-    private func iconRow(for theme: SquartVisualTheme) -> some View {
-        let isSelected = iconManager.selectedTheme == theme
-        let isLocked = !access.canUseAppIcon(for: theme)
-
-        return Button {
-            select(theme)
-        } label: {
+        Button(action: onSelect) {
             HStack(spacing: 14) {
-                iconPreview(for: theme, isLocked: isLocked)
+                iconPreview
 
                 VStack(alignment: .leading, spacing: 5) {
                     HStack(spacing: 8) {
                         Text(theme.displayName)
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(isLocked ? palette.mutedText : palette.strongText)
+                            .foregroundStyle(isLocked ? palette.strongText.opacity(0.72) : palette.strongText)
 
-                        Text(theme == .cappuccino ? "Default" : (isLocked ? "Locked" : "Premium"))
+                        Text(theme == .cappuccino ? "Default" : "Premium")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(isLocked ? palette.accent : palette.buttonText)
+                            .foregroundStyle(badgeForeground)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Capsule().fill(isLocked ? palette.subtlePanel : palette.accent))
+                            .background(Capsule().fill(badgeFill))
                     }
 
-                    Text(iconDescription(for: theme, isLocked: isLocked))
+                    Text(description)
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(palette.mutedText)
                         .fixedSize(horizontal: false, vertical: true)
@@ -119,61 +35,62 @@ struct AppIconPickerView: View {
 
                 Spacer(minLength: 8)
 
-                Image(systemName: trailingIcon(isSelected: isSelected, isLocked: isLocked))
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(isSelected ? palette.accent : palette.mutedText.opacity(0.58))
+                Image(systemName: trailingIcon)
+                    .font(.system(size: isLocked ? 17 : 20, weight: .semibold))
+                    .foregroundStyle(trailingIconColor)
             }
             .padding(16)
             .squartCard(
                 cornerRadius: 16,
-                fill: isLocked ? palette.panel.opacity(0.62) : palette.panel,
+                fill: isLocked ? palette.panel.opacity(0.72) : palette.panel,
                 stroke: isSelected ? palette.accent.opacity(0.62) : palette.border
             )
         }
         .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.99, pressedOpacity: 0.90))
-        .opacity(isLocked ? 0.82 : 1)
+        .opacity(isLocked ? 0.94 : 1)
         .animation(SquartTheme.themeTransitionAnimation, value: isSelected)
         .animation(SquartTheme.themeTransitionAnimation, value: isLocked)
     }
 
-    private func select(_ theme: SquartVisualTheme) {
-        guard access.canUseAppIcon(for: theme) else {
-            Haptics.selection()
-            isShowingSupportDevelopment = true
-            return
+    private var badgeForeground: Color {
+        if theme == .cappuccino {
+            return palette.accent
         }
-
-        Task {
-            let result = await iconManager.setIcon(for: theme, access: access)
-            if result == .changed || result == .alreadySelected {
-                Haptics.selection()
-            } else if result == .failed || result == .unsupported {
-                Haptics.warning()
-            }
-        }
+        return isLocked ? palette.accent : palette.buttonText
     }
 
-    private func iconDescription(for theme: SquartVisualTheme, isLocked: Bool) -> String {
-        if isLocked {
-            return "Included with Squart Supporter."
+    private var badgeFill: Color {
+        if theme == .cappuccino {
+            return palette.subtlePanel
         }
+        return isLocked ? palette.subtlePanel : palette.accent
+    }
 
+    private var description: String {
+        if isLocked {
+            return "Unlocks with the premium pack."
+        }
         if theme == .cappuccino {
             return "The primary Squart app icon."
         }
-
-        return "Alternate icon for the \(theme.displayName) theme."
+        return "Matches the \(theme.displayName) theme."
     }
 
-    private func trailingIcon(isSelected: Bool, isLocked: Bool) -> String {
+    private var trailingIcon: String {
         if isLocked {
-            return "lock.circle"
+            return "lock.fill"
         }
-
         return isSelected ? "checkmark.circle.fill" : "circle"
     }
 
-    private func iconPreview(for theme: SquartVisualTheme, isLocked: Bool) -> some View {
+    private var trailingIconColor: Color {
+        if isLocked {
+            return palette.mutedText.opacity(0.55)
+        }
+        return isSelected ? palette.accent : palette.mutedText.opacity(0.55)
+    }
+
+    private var iconPreview: some View {
         let themePalette = theme.palette
 
         return RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -199,10 +116,4 @@ struct AppIconPickerView: View {
                     .stroke(palette.subtleBorder, lineWidth: 1)
             )
     }
-}
-
-#Preview {
-    AppIconPickerView()
-        .environmentObject(StoreManager.shared)
-        .environmentObject(AppIconManager.shared)
 }

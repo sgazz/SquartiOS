@@ -73,7 +73,6 @@ struct SetupView: View {
     @State private var selectedBoardShape: BoardShapeOption = .square
     @State private var selectedBoardSize: BoardSizeOption = .ten
     @State private var selectedInactiveRatio: InactiveRatioOption = .standard
-    @State private var isShowingRules = false
     @Environment(\.squartPalette) private var palette
     private let configurationStore = GameConfigurationStore.shared
 
@@ -183,23 +182,6 @@ struct SetupView: View {
                     }
                 }
 
-                Button {
-                    Haptics.selection()
-                    isShowingRules = true
-                } label: {
-                    Label("How to Play", systemImage: "questionmark.circle")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(palette.accent)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 10)
-                        .background(
-                            Capsule()
-                                .stroke(palette.accent.opacity(0.32), lineWidth: 1)
-                                .background(Capsule().fill(palette.subtlePanel.opacity(0.78)))
-                        )
-                }
-                .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.985, pressedOpacity: 0.88))
-
                 HStack(spacing: 12) {
                     Button(action: onBack) {
                         Label("Back", systemImage: "chevron.left")
@@ -222,11 +204,6 @@ struct SetupView: View {
             .padding(.vertical, 30)
         }
         .scrollIndicators(.hidden)
-        .sheet(isPresented: $isShowingRules) {
-            RulesView()
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-        }
         .onAppear {
             apply(configurationStore.load())
         }

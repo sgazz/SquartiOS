@@ -6,7 +6,7 @@ nonisolated enum StoreProduct: String, CaseIterable, Identifiable {
     var displayName: String {
         switch self {
         case .supporter:
-            return "Squart Supporter"
+            return "Premium Themes & Icons"
         }
     }
 }

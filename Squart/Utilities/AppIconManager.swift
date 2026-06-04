@@ -69,7 +69,7 @@ final class AppIconManager: ObservableObject {
 
     func setIcon(for theme: SquartVisualTheme, access: ThemeAccess) async -> AppIconChangeResult {
         guard access.canUseAppIcon(for: theme) else {
-            statusMessage = "Squart Supporter unlocks this app icon."
+            statusMessage = "Premium Themes & Icons unlocks this app icon."
             return .locked
         }
 

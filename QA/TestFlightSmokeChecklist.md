@@ -99,7 +99,8 @@ Notes:
 ## 8) Themes / StoreKit
 - [ ] Cappuccino (free) selectable.
 - [ ] Premium themes show locked state when not entitled.
-- [ ] Support Development screen opens.
+- [ ] Locked theme or app icon opens Premium Themes & Icons purchase sheet.
+- [ ] App Icons are only in Themes & Icons (not a separate Settings row).
 - [ ] StoreKit unavailable case fails gracefully.
 - [ ] Restore Purchases action is safe.
 - [ ] Unlocked premium themes apply correctly (if entitlement/config available).

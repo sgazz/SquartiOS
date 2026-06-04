@@ -9,6 +9,7 @@ struct RootView: View {
 
     @State private var screen: Screen = .landing
     @State private var isShowingSettings = false
+    @State private var isShowingRules = false
     @State private var todayChallenge = DailyChallengeStore.shared.today()
     @State private var isTodayChallengeCompleted = false
     @EnvironmentObject private var storeManager: StoreManager
@@ -65,12 +66,7 @@ struct RootView: View {
                         .accessibilityLabel(isTodayChallengeCompleted ? "Daily Challenge completed today" : "Daily Challenge available today")
                     }
 
-                    Spacer()
-
-                    Text("Native iOS edition")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(palette.quietText)
-                        .padding(.bottom, 20)
+                    Spacer(minLength: 20)
                 }
                 .padding(32)
             case .setup:
@@ -98,30 +94,41 @@ struct RootView: View {
                 )
             }
         }
+        .overlay(alignment: .topLeading) {
+            if case .landing = screen {
+                landingToolbarButton(
+                    palette: palette,
+                    systemImage: "questionmark",
+                    accessibilityLabel: "How to Play"
+                ) {
+                    Haptics.selection()
+                    isShowingRules = true
+                }
+                .padding(.top, 22)
+                .padding(.leading, 22)
+            }
+        }
         .overlay(alignment: .topTrailing) {
             if case .landing = screen {
-                Button {
+                landingToolbarButton(
+                    palette: palette,
+                    systemImage: "gearshape",
+                    accessibilityLabel: "Settings"
+                ) {
                     Haptics.selection()
                     isShowingSettings = true
-                } label: {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(palette.bodyText)
-                        .frame(width: 42, height: 42)
-                        .background(
-                            Circle()
-                                .fill(palette.panel)
-                                .overlay(Circle().stroke(palette.border, lineWidth: 1))
-                        )
                 }
-                .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.96, pressedOpacity: 0.86))
-                .accessibilityLabel("Settings")
                 .padding(.top, 22)
                 .padding(.trailing, 22)
             }
         }
         .sheet(isPresented: $isShowingSettings) {
             SettingsView()
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $isShowingRules) {
+            RulesView()
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
@@ -230,6 +237,27 @@ private extension ScreenshotConfiguration.Screen {
     }
 }
 #endif
+
+private func landingToolbarButton(
+    palette: SquartThemePalette,
+    systemImage: String,
+    accessibilityLabel: String,
+    action: @escaping () -> Void
+) -> some View {
+    Button(action: action) {
+        Image(systemName: systemImage)
+            .font(.system(size: 17, weight: .semibold))
+            .foregroundStyle(palette.bodyText)
+            .frame(width: 42, height: 42)
+            .background(
+                Circle()
+                    .fill(palette.panel)
+                    .overlay(Circle().stroke(palette.border, lineWidth: 1))
+            )
+    }
+    .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.96, pressedOpacity: 0.86))
+    .accessibilityLabel(accessibilityLabel)
+}
 
 private struct PremiumBackground: View {
     let palette: SquartThemePalette

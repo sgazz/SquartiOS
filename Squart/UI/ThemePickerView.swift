@@ -3,10 +3,10 @@ import SwiftUI
 struct ThemePickerView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var storeManager: StoreManager
+    @EnvironmentObject private var iconManager: AppIconManager
     @State private var selectedTheme: SquartVisualTheme
-    @State private var isShowingSupportDevelopment = false
-    @State private var isShowingAppIcons = false
-    @State private var pendingThemeAfterUnlock: SquartVisualTheme?
+    @State private var isShowingPremiumPurchase = false
+    @State private var pendingPremiumTheme: SquartVisualTheme?
 
     private let store: SquartThemeStore
 
@@ -25,41 +25,30 @@ struct ThemePickerView: View {
             VStack(alignment: .leading, spacing: 22) {
                 header
 
-                HStack(spacing: 12) {
-                    Text("Premium themes are included with Squart Supporter.")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(palette.mutedText)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Spacer(minLength: 8)
-
-                    Button {
-                        isShowingAppIcons = true
-                    } label: {
-                        Label("App Icons", systemImage: "app.badge")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(palette.accent)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(Capsule().fill(palette.subtlePanel))
-                    }
-                    .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.97, pressedOpacity: 0.86))
-                }
-                .padding(.horizontal, 2)
-
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: 12) {
-                        ForEach(SquartVisualTheme.allCases) { theme in
-                            ThemePreviewCard(
-                                theme: theme,
-                                isSelected: selectedTheme == theme,
-                                isLocked: !access.canUse(theme)
-                            ) {
-                                select(theme)
+                    VStack(alignment: .leading, spacing: 20) {
+                        VStack(spacing: 12) {
+                            ForEach(SquartVisualTheme.allCases) { theme in
+                                ThemePreviewCard(
+                                    theme: theme,
+                                    isSelected: selectedTheme == theme,
+                                    isLocked: !access.canUse(theme)
+                                ) {
+                                    selectTheme(theme)
+                                }
                             }
                         }
+
+                        appIconSection
                     }
                     .padding(.bottom, 6)
+                }
+
+                if let statusMessage = iconManager.statusMessage {
+                    Text(statusMessage)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(palette.mutedText)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .padding(28)
@@ -67,38 +56,27 @@ struct ThemePickerView: View {
         .environment(\.squartPalette, palette)
         .animation(SquartTheme.themeTransitionAnimation, value: selectedTheme)
         .animation(SquartTheme.themeTransitionAnimation, value: storeManager.purchasedProductIDs)
+        .animation(SquartTheme.themeTransitionAnimation, value: iconManager.selectedTheme)
         .onAppear {
             selectedTheme = store.loadSelectedTheme(access: access)
+            iconManager.refreshSelectedTheme(access: access)
         }
         .task {
             await storeManager.refreshPurchasedProducts()
             await storeManager.loadProducts()
             selectedTheme = store.sanitizeSelectedTheme(access: access)
+            iconManager.refreshSelectedTheme(access: access)
         }
         .onChange(of: storeManager.purchasedProductIDs) { _, _ in
             #if DEBUG
             print("[SquartStore] ThemePickerView observed purchasedProductIDs=\(storeManager.purchasedProductIDs.sorted())")
             #endif
-            if let pendingThemeAfterUnlock, access.canUse(pendingThemeAfterUnlock) {
-                withAnimation(SquartTheme.themeTransitionAnimation) {
-                    selectedTheme = pendingThemeAfterUnlock
-                }
-                store.saveSelectedTheme(pendingThemeAfterUnlock)
-                self.pendingThemeAfterUnlock = nil
-            } else {
-                withAnimation(SquartTheme.themeTransitionAnimation) {
-                    selectedTheme = store.sanitizeSelectedTheme(access: access)
-                }
-            }
+            iconManager.refreshSelectedTheme(access: access)
+            applyPendingPremiumSelectionIfNeeded()
         }
-        .sheet(isPresented: $isShowingSupportDevelopment) {
-            SupportDevelopmentView()
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-        }
-        .sheet(isPresented: $isShowingAppIcons) {
-            AppIconPickerView()
-                .presentationDetents([.medium, .large])
+        .sheet(isPresented: $isShowingPremiumPurchase) {
+            PremiumThemesPurchaseView()
+                .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
         }
     }
@@ -107,31 +85,99 @@ struct ThemePickerView: View {
         ThemeAccess(purchasedProductIDs: storeManager.purchasedProductIDs)
     }
 
-    private func select(_ theme: SquartVisualTheme) {
+    private var appIconSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("App Icon")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(selectedTheme.palette.mutedText)
+                .textCase(.uppercase)
+                .tracking(0.6)
+
+            if !storeManager.isSupporterPurchased {
+                Text("One purchase unlocks premium themes and alternate app icons.")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(selectedTheme.palette.mutedText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            VStack(spacing: 12) {
+                ForEach(SquartVisualTheme.allCases) { theme in
+                    AppIconThemeRow(
+                        theme: theme,
+                        isSelected: iconManager.selectedTheme == theme,
+                        isLocked: !access.canUseAppIcon(for: theme)
+                    ) {
+                        selectAppIcon(theme)
+                    }
+                }
+            }
+        }
+    }
+
+    private func selectTheme(_ theme: SquartVisualTheme) {
         guard access.canUse(theme) else {
             Haptics.selection()
-            pendingThemeAfterUnlock = theme
-            isShowingSupportDevelopment = true
+            pendingPremiumTheme = theme
+            isShowingPremiumPurchase = true
             return
         }
 
+        applyThemeAndIcon(theme)
+    }
+
+    private func selectAppIcon(_ theme: SquartVisualTheme) {
+        guard access.canUseAppIcon(for: theme) else {
+            Haptics.selection()
+            pendingPremiumTheme = theme
+            isShowingPremiumPurchase = true
+            return
+        }
+
+        Task {
+            let result = await iconManager.setIcon(for: theme, access: access)
+            if result == .changed || result == .alreadySelected {
+                Haptics.selection()
+            } else if result == .failed || result == .unsupported {
+                Haptics.warning()
+            }
+        }
+    }
+
+    private func applyThemeAndIcon(_ theme: SquartVisualTheme) {
         withAnimation(SquartTheme.themeTransitionAnimation) {
             selectedTheme = theme
         }
         store.saveSelectedTheme(theme)
-        Haptics.selection()
+
+        Task {
+            _ = await iconManager.setIcon(for: theme, access: access)
+            Haptics.selection()
+        }
+    }
+
+    private func applyPendingPremiumSelectionIfNeeded() {
+        guard let pendingPremiumTheme, access.canUse(pendingPremiumTheme) else {
+            withAnimation(SquartTheme.themeTransitionAnimation) {
+                selectedTheme = store.sanitizeSelectedTheme(access: access)
+            }
+            return
+        }
+
+        applyThemeAndIcon(pendingPremiumTheme)
+        self.pendingPremiumTheme = nil
     }
 
     private var header: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Themes")
+                Text("Themes & Icons")
                     .font(SquartTheme.titleFont(size: 28))
                     .foregroundStyle(selectedTheme.palette.primaryText)
 
-                Text("Choose the visual mood for Squart.")
+                Text("Premium themes and matching app icons unlock together.")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(selectedTheme.palette.mutedText)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Spacer()
@@ -146,7 +192,7 @@ struct ThemePickerView: View {
                     .background(Circle().fill(selectedTheme.palette.panel))
             }
             .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.94, pressedOpacity: 0.82))
-            .accessibilityLabel("Close themes")
+            .accessibilityLabel("Close themes and icons")
         }
     }
 }

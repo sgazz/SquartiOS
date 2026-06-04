@@ -17,7 +17,7 @@ struct ThemePreviewCard: View {
                     HStack(spacing: 8) {
                         Text(theme.displayName)
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(isLocked ? palette.mutedText : palette.strongText)
+                            .foregroundStyle(isLocked ? palette.strongText.opacity(0.72) : palette.strongText)
 
                         Text(labelText)
                             .font(.system(size: 11, weight: .bold))
@@ -34,29 +34,23 @@ struct ThemePreviewCard: View {
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(palette.mutedText)
                         .fixedSize(horizontal: false, vertical: true)
-
-                    if isLocked {
-                        Label("Included with Squart Supporter", systemImage: "lock.fill")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(palette.accent.opacity(0.86))
-                    }
                 }
 
                 Spacer(minLength: 8)
 
                 Image(systemName: trailingIcon)
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.system(size: isLocked ? 17 : 20, weight: .semibold))
                     .foregroundStyle(trailingIconColor)
             }
             .padding(16)
             .squartCard(
                 cornerRadius: 16,
-                fill: isLocked ? palette.panel.opacity(0.62) : palette.panel,
-                stroke: isSelected ? palette.accent.opacity(0.62) : palette.border
+                fill: isLocked ? palette.panel.opacity(0.72) : palette.panel,
+                stroke: cardStroke
             )
         }
         .buttonStyle(SquartTactileButtonStyle(pressedScale: 0.99, pressedOpacity: 0.90))
-        .opacity(isLocked ? 0.82 : 1)
+        .opacity(isLocked ? 0.94 : 1)
         .scaleEffect(isSelected ? 1.015 : 1)
         .animation(SquartTheme.themeTransitionAnimation, value: isSelected)
         .animation(SquartTheme.themeTransitionAnimation, value: isLocked)
@@ -64,7 +58,7 @@ struct ThemePreviewCard: View {
 
     private var labelText: String {
         if isLocked {
-            return "Locked"
+            return "Premium"
         }
 
         return theme.isPremium ? "Premium" : "Free"
@@ -86,9 +80,19 @@ struct ThemePreviewCard: View {
         return theme.isPremium ? palette.accent : palette.subtlePanel
     }
 
+    private var cardStroke: Color {
+        if isSelected {
+            return palette.accent.opacity(0.62)
+        }
+        if isLocked {
+            return palette.border.opacity(0.85)
+        }
+        return palette.border
+    }
+
     private var trailingIcon: String {
         if isLocked {
-            return "lock.circle"
+            return "lock.fill"
         }
 
         return isSelected ? "checkmark.circle.fill" : "circle"
@@ -96,7 +100,7 @@ struct ThemePreviewCard: View {
 
     private var trailingIconColor: Color {
         if isLocked {
-            return palette.accent.opacity(0.66)
+            return palette.mutedText.opacity(0.55)
         }
 
         return isSelected ? palette.accent : palette.mutedText.opacity(0.55)
@@ -115,6 +119,7 @@ struct ThemePreviewCard: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(palette.subtleBorder, lineWidth: 1)
         )
+        .opacity(isLocked ? 0.88 : 1)
     }
 }
 
@@ -156,7 +161,7 @@ private extension SquartVisualTheme {
 }
 
 #Preview {
-    ThemePreviewCard(theme: .cappuccino, isSelected: true, isLocked: false) {}
+    ThemePreviewCard(theme: .obsidian, isSelected: false, isLocked: true) {}
         .padding()
         .background(SquartVisualTheme.defaultTheme.palette.sheetBackground)
 }
